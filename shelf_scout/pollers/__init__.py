@@ -23,6 +23,7 @@ log = logging.getLogger("shelf_scout.poll")
 # Honest and identifiable on purpose: no browser impersonation. If a retailer won't talk to this, we back off.
 USER_AGENT = "shelf-scout/0.1 (personal PS5 Pro stock alert; about one request a minute)"
 MAX_BACKOFF = 30 * 60
+BLOCK_MIN_WAIT = 10 * 60  # after a bot-check, stay away at least this long: hammering a flagged address keeps it flagged
 BURST_FACTOR = 2  # ponytail: fixed; make it a setting if you want to tune it. Polls this many times faster on sale days
 BLOCK_STATUSES = {403, 429, 503}
 # Challenge pages often come back as HTTP 200 (Amazon does), so status codes alone would miss them.
@@ -173,7 +174,7 @@ async def poll_step(poller: Poller, engine, conn, st: RunState) -> float:
         log.info("%s: poll ok, %s", name, ", ".join(f"{r.state.value}" for r in readings) or "nothing new")
         wait = interval / BURST_FACTOR if poller.burst_ok and is_sale_day() else interval
     else:
-        wait = min(interval * 2 ** st.fails, MAX_BACKOFF)  # doubles each failure, resets on success
+        wait = min(max(interval * 2 ** st.fails, BLOCK_MIN_WAIT if blocked else 0), MAX_BACKOFF)  # doubles each failure, resets on success
         log.warning("%s: poll failed (%s). Retrying in %.0fs", name, readings[0].detail, wait)
         if blocked and not st.blocked:
             st.blocked = True

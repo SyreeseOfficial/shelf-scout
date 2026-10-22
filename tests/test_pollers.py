@@ -156,9 +156,8 @@ def test_block_backs_off_notifies_once_and_recovers(tmp_path):
     poller, engine, conn, rec = make(tmp_path, [Blocked("HTTP 429")] * 3 + [good])
     st = RunState()
     waits = [step(poller, engine, conn, st) for _ in range(3)]
-    # 120 s, 240 s, 480 s, each within the +/-20% jitter
-    assert [round(w / b) for w, b in zip(waits, (120, 240, 480))] == [1, 1, 1]
-    assert waits[1] > waits[0] * 1.3 and waits[2] > waits[1] * 1.3  # worst case with +-20% jitter is 2*0.8/1.2 = 1.33
+    # a block means at least 10 minutes away (120/240/480 s would be shorter), within the +/-20% jitter
+    assert [round(w / 600) for w in waits] == [1, 1, 1]
     assert len(rec.alerts) == 1 and "blocking" in rec.alerts[0].notice  # one notice for three blocked polls
     row = conn.execute("SELECT * FROM health WHERE retailer='fake'").fetchone()
     assert (row["state"], row["error_count"], row["last_ok"]) == ("blocked", 3, None)
@@ -225,7 +224,7 @@ def test_target_garbage_and_unknown_status_are_errors():
 
 
 def test_target_stores_and_price():
-    assert target.parse_stores(read("target/nearby.json")) == ["338", "2090", "1810", "1904"]
+    assert target.parse_stores(read("target/nearby.json")) == ["338", "2090", "1810"]
     with pytest.raises(ParseError):
         target.parse_stores(read("target/garbage.json"))
     assert target.parse_price(read("target/pdp.json")) == 89999

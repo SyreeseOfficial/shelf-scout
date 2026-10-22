@@ -20,7 +20,7 @@ from . import ParseError, PollError, Poller, to_cents
 
 KEY = "9f36aeafbe60771e321a7cc95a78140772ab3e96"
 BASE = "https://redsky.target.com/redsky_aggregations/v1/web"
-MAX_STORES = 5      # ponytail: nearest 5 only, to keep requests per poll low; raise if you want a wider net
+MAX_STORES = 3      # ponytail: nearest 3 only (5 got us flagged for hours), to keep requests per poll low; raise if you want a wider net
 STORE_REFRESH = 3600
 IN = {"IN_STOCK", "LIMITED_STOCK"}
 # UNAVAILABLE = Target doesn't offer that route for this item. Anything else we haven't seen is an error, not "out".
