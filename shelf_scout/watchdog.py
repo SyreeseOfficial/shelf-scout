@@ -91,8 +91,8 @@ def startup_check(settings: dict) -> list[tuple[str, str]]:
             continue
         if not (r["skus"] or r["urls"]):
             missing.append(f"{name} (no product link or id)")
-        elif name == "bestbuy" and not r["api_key"]:
-            missing.append("bestbuy (no API key)")
+        elif name in ("bestbuy", "ebay") and not r["api_key"]:
+            missing.append(f"{name} (no API key)")
         else:
             ready.append(name)
     out.append(("info", f"retailers ready to poll: {', '.join(ready) or 'none'}"))

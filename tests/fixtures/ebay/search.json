@@ -1,0 +1,205 @@
+{
+ "total": 8,
+ "itemSummaries": [
+  {
+   "itemId": "v1|1|0",
+   "title": "Sony PlayStation 5 Pro 2TB Console - Sealed",
+   "price": {
+    "value": "849.99",
+    "currency": "USD"
+   },
+   "condition": "New",
+   "itemWebUrl": "https://www.ebay.com/itm/1",
+   "seller": {
+    "username": "seller1",
+    "feedbackPercentage": "99.5",
+    "feedbackScore": 500
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "shippingOptions": [
+    {
+     "shippingCost": {
+      "value": "0",
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "itemId": "v1|2|0",
+   "title": "PS5 Pro console used with controller",
+   "price": {
+    "value": "899.0",
+    "currency": "USD"
+   },
+   "condition": "Used",
+   "itemWebUrl": "https://www.ebay.com/itm/2",
+   "seller": {
+    "username": "seller2",
+    "feedbackPercentage": "99.5",
+    "feedbackScore": 500
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "shippingOptions": [
+    {
+     "shippingCost": {
+      "value": "10.0",
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "itemId": "v1|3|0",
+   "title": "PS5 Pro DualSense controller",
+   "price": {
+    "value": "69.99",
+    "currency": "USD"
+   },
+   "condition": "New",
+   "itemWebUrl": "https://www.ebay.com/itm/3",
+   "seller": {
+    "username": "seller3",
+    "feedbackPercentage": "99.5",
+    "feedbackScore": 500
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "shippingOptions": [
+    {
+     "shippingCost": {
+      "value": "0",
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "itemId": "v1|4|0",
+   "title": "PS5 Pro for parts not working",
+   "price": {
+    "value": "500",
+    "currency": "USD"
+   },
+   "condition": "New",
+   "itemWebUrl": "https://www.ebay.com/itm/4",
+   "seller": {
+    "username": "seller4",
+    "feedbackPercentage": "99.5",
+    "feedbackScore": 500
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "shippingOptions": [
+    {
+     "shippingCost": {
+      "value": "0",
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "itemId": "v1|5|0",
+   "title": "PS5 Pro console brand new",
+   "price": {
+    "value": "600",
+    "currency": "USD"
+   },
+   "condition": "New",
+   "itemWebUrl": "https://www.ebay.com/itm/5",
+   "seller": {
+    "username": "seller5",
+    "feedbackPercentage": "80.0",
+    "feedbackScore": 500
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "shippingOptions": [
+    {
+     "shippingCost": {
+      "value": "0",
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "itemId": "v1|6|0",
+   "title": "PS5 Pro console",
+   "price": {
+    "value": "700",
+    "currency": "USD"
+   },
+   "condition": "New",
+   "itemWebUrl": "https://www.ebay.com/itm/6",
+   "seller": {
+    "username": "seller6",
+    "feedbackPercentage": "99.5",
+    "feedbackScore": 2
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "shippingOptions": [
+    {
+     "shippingCost": {
+      "value": "0",
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "itemId": "v1|7|0",
+   "title": "Nintendo Switch OLED",
+   "price": {
+    "value": "450",
+    "currency": "USD"
+   },
+   "condition": "New",
+   "itemWebUrl": "https://www.ebay.com/itm/7",
+   "seller": {
+    "username": "seller7",
+    "feedbackPercentage": "99.5",
+    "feedbackScore": 500
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "shippingOptions": [
+    {
+     "shippingCost": {
+      "value": "0",
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "itemId": "v1|8|0",
+   "title": "Sony PS5 Pro local pickup",
+   "price": {
+    "value": "800",
+    "currency": "USD"
+   },
+   "condition": "Used",
+   "itemWebUrl": "https://www.ebay.com/itm/8",
+   "seller": {
+    "username": "seller8",
+    "feedbackPercentage": "99.5",
+    "feedbackScore": 500
+   },
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ]
+  }
+ ]
+}

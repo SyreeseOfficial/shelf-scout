@@ -79,6 +79,7 @@ You get one phone message per block, not one per retry.
 | Walmart | Product page, schema.org JSON-LD (`/ip/<item id>`) | No (page has no per-store data) | walmart.com redirects us to its `/blocked` page, so it reports `blocked`. Not bypassed. Default item id `11839818124` came from a web search and is unverified. Marketplace sellers are labelled from the page. |
 | GameStop | Product page, schema.org JSON-LD | No | gamestop.com answers HTTP 403 (bot check), so it reports `blocked`. Not bypassed. Put the full product link in `retailers.gamestop.urls` (I couldn't find the real PS5 Pro link). |
 | Costco | Product page, schema.org JSON-LD | No | Costco serves pages to us, but lists the console only in short-lived bundles and I found no live link. Put the full link in `retailers.costco.urls` when one appears. Parser tested on hand-written fixtures only. |
+| eBay (resale) | Official Browse API (free key) | No (ships; local-pickup listings are labelled) | Off until you add a key. Alerts on Buy It Now PS5 Pro listings (new, open box, used) at or under MSRP **including shipping**, from sellers with 95%+ feedback and 10+ ratings; skips parts/empty-box/accessory listings. When nothing qualifies, its dashboard row shows the cheapest real listing. Get a Production keyset at developer.ebay.com, set `retailers.ebay.api_key` as `CLIENT_ID:CLIENT_SECRET`, turn it on. Parser tested on hand-written fixtures only. |
 
 Where a retailer has no per-store data, shelf-scout uses the online listing (as in the table). "Blocked" retailers are covered by the tracker layer (Phase 5) and each retailer's own notify-me alerts.
 
@@ -91,8 +92,10 @@ Where a retailer has no per-store data, shelf-scout uses the online listing (as 
 | `"alert"` (default) | A new item whose title mentions a PS5 Pro **and** a restock word (restock, in stock, available, live) sends a **loud** alert labelled `unverified (tracker)` with no price. The alert closes after 30 min so the next hit alerts again. Old items (over 30 min) are ignored, so a restart doesn't replay history. |
 | `"news"` | PS5 items are saved to the `announcements` table for the dashboard. Set `announcement_heads_up: true` for a quiet message on each new one (off by default). |
 
-Defaults: Reddit r/consoledeals and Slickdeals (alert), the PlayStation Blog (news). All three work without an account. Reddit sometimes answers 403/429 when it's busy; shelf-scout backs off and retries. `type` is `rss` only. Trackalacker has no feed and builds its page with JavaScript, so keep using its own email/text alerts (the owner checklist covers this).
-The sale calendar (Black Friday, Cyber Monday, ...) is `shelf_scout/trackers/sale_calendar.json`: add next year's dates there.
+Defaults: Reddit r/consoledeals and Slickdeals (alert), the PlayStation Blog (news). All three work without an account. Reddit sometimes answers 403/429 when it's busy; shelf-scout backs off and retries. `type` is `rss`, or `telegram` for a public channel's web view (`https://t.me/s/<channel>`, no login; Settings picks the type from the link). Trackalacker has no feed and builds its page with JavaScript, so keep using its own email/text alerts (the owner checklist covers this).
+The sale calendar (Black Friday, Cyber Monday, ...) is `shelf_scout/trackers/sale_calendar.json`: add next year's dates there. On those dates every source except Target polls twice as fast.
+
+Craigslist is not supported: it answers HTTP 403 "blocked" to its own RSS feeds. Use Craigslist's built-in saved-search email alerts (search "ps5 pro" for Seattle, Everett, Eastside, Tacoma).
 
 ## Run it as a service (restarts itself)
 

@@ -60,12 +60,12 @@
 
 <section>
   <h2>Retailers</h2>
-  <p class="muted small">Product links and ids live here, so a dead link is fixed without touching code. Best Buy needs a free API key (developer.bestbuy.com). Target wants the TCIN, Sony the product code, Amazon the ASIN, Walmart the item id; GameStop and Costco need full links.</p>
+  <p class="muted small">Product links and ids live here, so a dead link is fixed without touching code. Best Buy needs a free API key (developer.bestbuy.com). eBay needs a free key from developer.ebay.com, written CLIENT_ID:CLIENT_SECRET; its "product ids" are search words, and it only alerts on Buy It Now listings at or under MSRP. Target wants the TCIN, Sony the product code, Amazon the ASIN, Walmart the item id; GameStop and Costco need full links.</p>
   <div class="grid">
   {% for name, r in s.retailers.items() %}
   <div style="border-top:1px solid var(--line);padding-bottom:8px">
     <h3>{{ name }}</h3>
-    {% for k, v in r.items() if name == 'bestbuy' or k != 'api_key' %}
+    {% for k, v in r.items() if name in ('bestbuy', 'ebay') or k != 'api_key' %}
       {{ field('r_' ~ name ~ '_' ~ k, k, v, {'enabled': 'Enabled', 'interval_seconds': 'Check every (seconds)', 'urls': 'Product links', 'skus': 'Product ids (SKU / TCIN / ASIN)', 'api_key': 'API key'}[k]) }}
     {% endfor %}
   </div>

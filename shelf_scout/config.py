@@ -11,9 +11,9 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-RETAILERS = ["sony", "bestbuy", "amazon", "walmart", "target", "gamestop", "costco"]
+RETAILERS = ["sony", "bestbuy", "amazon", "walmart", "target", "gamestop", "costco", "ebay"]
 
-# api_key is only used by retailers that have an official API (Best Buy); the rest ignore it.
+# api_key is only used by retailers that have an official API (Best Buy, eBay); the rest ignore it.
 RETAILER_DEFAULT = {"enabled": True, "interval_seconds": 45, "urls": [], "skus": [], "api_key": ""}
 
 DEFAULTS = {
@@ -49,6 +49,8 @@ DEFAULTS["retailers"]["sony"].update(
 # Target's PS5 Pro (TCIN confirmed against Target's own API reply). Walmart's item id came from a web search and is unverified.
 DEFAULTS["retailers"]["target"].update(urls=["https://www.target.com/p/-/A-93620188"], skus=["93620188"])
 DEFAULTS["retailers"]["walmart"].update(skus=["11839818124"])
+# eBay: off until you add an API key. skus = search words. 60 s keeps us well inside eBay's 5,000 calls/day.
+DEFAULTS["retailers"]["ebay"].update(enabled=False, interval_seconds=60, skus=["PS5 Pro"])
 
 # Smallest allowed value for numeric keys (stops a typo from hammering a retailer or spamming the phone).
 MINIMUMS = {"repeat_seconds": 10, "interval_seconds": 10, "no_poll_alert_minutes": 1, "port": 1}

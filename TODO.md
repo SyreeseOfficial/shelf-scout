@@ -17,6 +17,13 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 - [ ] **GameStop is blocked.** HTTP 403 bot check. Not bypassed. Same fallback.
 - [ ] **Target blocked us once (PerimeterX, HTTP 435)** after about 10 test requests in a few minutes. It cleared by itself and now polls live (5 requests per poll). If it comes back during normal running, lower `MAX_STORES` in `pollers/target.py` or raise `retailers.target.interval_seconds`.
 
+## Owner actions (resale / extra sources)
+
+- [ ] **eBay key.** Sign up at developer.ebay.com, create a Production keyset, put `CLIENT_ID:CLIENT_SECRET` in Settings -> Retailers -> ebay -> API key, turn it on, then `python -m shelf_scout poll-once ebay`. The parser is tested on hand-written fixtures; check it against the first real reply.
+- [ ] **Telegram restock channel.** The `telegram` feed type works (tested on a real channel page), but I couldn't find a verified public PS5 Pro restock channel. Find one in Telegram, open `https://t.me/s/<channel>` in a browser to confirm it shows messages, then add it in Settings -> Feeds (role: alert).
+- [ ] **Craigslist: set up its own alerts.** Craigslist blocks us (HTTP 403 on RSS), so it is not bypassed. Save a "ps5 pro" search for Seattle, Everett, Eastside and Tacoma and turn on email alerts.
+- [ ] **eBay filters are constants** in `pollers/ebay.py` (95% feedback, 10+ ratings, price over half of MSRP, junk-word list). Tell me if real listings get filtered out.
+
 ## Owner actions (Phase 4)
 
 - [x] **GameStop link.** Saved.
