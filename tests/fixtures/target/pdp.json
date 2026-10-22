@@ -1,0 +1,16 @@
+{
+ "data": {
+  "product": {
+   "tcin": "93620188",
+   "price": {
+    "current_retail": 899.99,
+    "display_was_now": false,
+    "formatted_current_price": "$899.99",
+    "formatted_current_price_type": "reg",
+    "reg_retail": 899.99,
+    "location_id": 3991,
+    "external_system_id": "93620188-3991-899.99-2026080906"
+   }
+  }
+ }
+}

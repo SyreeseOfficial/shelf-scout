@@ -57,7 +57,7 @@ async def poll_once(settings: dict, retailer: str) -> int:
     async with httpx.AsyncClient(headers={"User-Agent": pollers.USER_AGENT}, timeout=15, follow_redirects=True) as client:
         poller = pollers.build(retailer, client, lambda: settings)
         if poller is None:
-            print(f"No poller for {retailer!r} yet. Available: sony, bestbuy, amazon")
+            print(f"No poller for {retailer!r} yet. Available: sony, bestbuy, amazon, walmart, target, gamestop, costco")
             return 1
         try:
             readings = await poller.check()
@@ -96,7 +96,7 @@ def main() -> int:
     test = sub.add_parser("test", help="fire a fake restock through every enabled channel")
     test.add_argument("--quiet", action="store_true", help="fake an over-cap price (one low-priority message)")
     once = sub.add_parser("poll-once", help="check one retailer now and print the result")
-    once.add_argument("retailer", help="e.g. sony, bestbuy, amazon")
+    once.add_argument("retailer", help="sony, bestbuy, amazon, walmart, target, gamestop, costco")
     args = parser.parse_args()
     setup_logging()
     try:

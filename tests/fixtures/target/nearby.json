@@ -1,0 +1,33 @@
+{
+ "data": {
+  "nearby_stores": {
+   "count": 4,
+   "stores": [
+    {
+     "status": "Open",
+     "store_id": "338",
+     "location_name": "Lynnwood",
+     "distance": 1.65
+    },
+    {
+     "status": "Open",
+     "store_id": "2090",
+     "location_name": "Mountlake Terrace",
+     "distance": 3.9
+    },
+    {
+     "status": "Open",
+     "store_id": "1810",
+     "location_name": "Everett",
+     "distance": 6.2
+    },
+    {
+     "status": "Open",
+     "store_id": "1904",
+     "location_name": "Bothell",
+     "distance": 7.8
+    }
+   ]
+  }
+ }
+}

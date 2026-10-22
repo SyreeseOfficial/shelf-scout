@@ -14,7 +14,7 @@ from shelf_scout import config, db
 from shelf_scout.engine import Engine
 from shelf_scout.models import Fulfillment, Layer, StockState
 from shelf_scout.pollers import Blocked, ParseError, PollError, Poller, RunState, poll_step, raise_if_blocked, to_cents
-from shelf_scout.pollers import amazon, bestbuy, sony
+from shelf_scout.pollers import amazon, bestbuy, jsonld, sony, target
 
 FIX = Path(__file__).parent / "fixtures"
 URL = "https://example.com/ps5"
@@ -200,3 +200,66 @@ def test_readings_table_holds_latest_snapshot(tmp_path):
     assert [r["state"] for r in conn.execute("SELECT state FROM readings")] == ["in_stock"]
     step(poller, engine, conn, st)
     assert [r["state"] for r in conn.execute("SELECT state FROM readings")] == ["error"]  # replaced, no stale row
+
+
+# ---- target (fulfillment fixtures: out_of_stock/pdp/blocked are real captures, in_stock/nearby hand-written) ----
+
+def test_target_out_of_stock_has_ship_and_store_readings():
+    ship, store = target.parse_fulfillment(read("target/out_of_stock.json"), "93620188", URL)
+    assert (ship.state, ship.fulfillment, ship.url) == (StockState.OUT_OF_STOCK, Fulfillment.SHIP, URL)
+    assert (store.state, store.url) == (StockState.OUT_OF_STOCK, URL + "#store-2776")
+
+
+def test_target_in_stock_store_pickup():
+    ship, store = target.parse_fulfillment(read("target/in_stock.json"), "93620188", URL)
+    assert ship.state is StockState.IN_STOCK
+    assert (store.state, store.fulfillment, store.detail) == (StockState.IN_STOCK, Fulfillment.PICKUP, "Lynnwood store")
+
+
+def test_target_garbage_and_unknown_status_are_errors():
+    for bad in (read("target/garbage.json"), "<html></html>", ""):
+        with pytest.raises(ParseError):
+            target.parse_fulfillment(bad, "93620188", URL)
+    with pytest.raises(ParseError):
+        target.parse_fulfillment(read("target/out_of_stock.json").replace('"OUT_OF_STOCK"', '"SOMETHING_NEW"'), "1", URL)
+
+
+def test_target_stores_and_price():
+    assert target.parse_stores(read("target/nearby.json")) == ["338", "2090", "1810", "1904"]
+    with pytest.raises(ParseError):
+        target.parse_stores(read("target/garbage.json"))
+    assert target.parse_price(read("target/pdp.json")) == 89999
+    assert target.parse_price("junk") is None
+
+
+def test_target_px_block_page_is_a_block():
+    with pytest.raises(Blocked):
+        raise_if_blocked(response(435, read("target/blocked.html")))
+
+
+# ---- walmart / gamestop / costco (shared JSON-LD parser; fixtures hand-written, live sites block or have no PS5 Pro link) ----
+
+@pytest.mark.parametrize("retailer", ["walmart", "gamestop", "costco"])
+def test_jsonld_in_out_garbage(retailer):
+    [r] = jsonld.parse(read(f"{retailer}/in_stock.html"), retailer, retailer.title(), URL)
+    assert (r.state, r.price_cents, r.layer) == (StockState.IN_STOCK, 89999, Layer.PAGE)
+    [r] = jsonld.parse(read(f"{retailer}/out_of_stock.html"), retailer, retailer.title(), URL)
+    assert r.state is StockState.OUT_OF_STOCK
+    with pytest.raises(ParseError):
+        jsonld.parse(read(f"{retailer}/garbage.html"), retailer, retailer.title(), URL)
+
+
+def test_jsonld_seller_label_and_wrong_product_and_unknown_availability():
+    [r] = jsonld.parse(read("walmart/in_stock.html"), "walmart", "Walmart", URL)
+    assert r.seller == "Marketplace Gamer LLC"  # marketplace sellers are labelled, not filtered
+    [r] = jsonld.parse(read("gamestop/in_stock.html"), "gamestop", "GameStop", URL)
+    assert r.seller == "GameStop"  # no seller in the page: falls back to the retailer
+    with pytest.raises(ParseError, match="not a PS5 Pro"):
+        jsonld.parse(read("gamestop/in_stock.html").replace("PlayStation\\u00ae5 Pro", "Wizards and Warriors II"), "gamestop", "GameStop", URL)
+    with pytest.raises(ParseError):  # PreOrder etc. is unknown, so it must not read as out of stock
+        jsonld.parse(read("costco/in_stock.html").replace("InStock", "PreOrder"), "costco", "Costco", URL)
+
+
+def test_walmart_blocked_redirect_is_a_block():
+    with pytest.raises(Blocked):
+        raise_if_blocked(response(200, "ok", url="https://www.walmart.com/blocked?url=L2lw&uuid=x"))

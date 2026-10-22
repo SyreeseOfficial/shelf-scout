@@ -8,17 +8,90 @@
   "radius_miles": 10,
   "quiet_hours": [],
   "retailers": {
-    "sony": { "enabled": true, "interval_seconds": 45, "urls": ["https://direct.playstation.com/en-us/buy-consoles/playstation5-pro-console-2-tb"], "skus": ["1000050928"] },
-    "bestbuy": { "enabled": true, "interval_seconds": 45, "urls": [], "skus": [], "api_key": "" },
-    "amazon": { "enabled": true, "interval_seconds": 45, "urls": [], "skus": [] }
+    "sony": {
+      "enabled": true,
+      "interval_seconds": 45,
+      "urls": [
+        "https://direct.playstation.com/en-us/buy-consoles/playstation5-pro-console-2-tb"
+      ],
+      "skus": [
+        "1000050928"
+      ]
+    },
+    "bestbuy": {
+      "enabled": true,
+      "interval_seconds": 45,
+      "urls": [],
+      "skus": [],
+      "api_key": ""
+    },
+    "amazon": {
+      "enabled": true,
+      "interval_seconds": 45,
+      "urls": [],
+      "skus": []
+    },
+    "walmart": {
+      "enabled": true,
+      "interval_seconds": 45,
+      "urls": [],
+      "skus": [
+        "11839818124"
+      ]
+    },
+    "target": {
+      "enabled": true,
+      "interval_seconds": 45,
+      "urls": [
+        "https://www.target.com/p/-/A-93620188"
+      ],
+      "skus": [
+        "93620188"
+      ]
+    },
+    "gamestop": {
+      "enabled": true,
+      "interval_seconds": 45,
+      "urls": [],
+      "skus": []
+    },
+    "costco": {
+      "enabled": true,
+      "interval_seconds": 45,
+      "urls": [],
+      "skus": []
+    }
   },
   "channels": {
-    "ntfy": { "enabled": true, "server": "https://ntfy.sh", "alert_topic": "", "ack_topic": "" },
-    "discord": { "enabled": false, "webhook_url": "" },
-    "telegram": { "enabled": false, "bot_token": "", "chat_id": "" },
-    "sms": { "enabled": false, "gateway_address": "", "smtp_host": "smtp.gmail.com", "smtp_user": "", "smtp_password": "" },
-    "pc": { "enabled": true }
+    "ntfy": {
+      "enabled": true,
+      "server": "https://ntfy.sh",
+      "alert_topic": "",
+      "ack_topic": ""
+    },
+    "discord": {
+      "enabled": false,
+      "webhook_url": ""
+    },
+    "telegram": {
+      "enabled": false,
+      "bot_token": "",
+      "chat_id": ""
+    },
+    "sms": {
+      "enabled": false,
+      "gateway_address": "",
+      "smtp_host": "smtp.gmail.com",
+      "smtp_user": "",
+      "smtp_password": ""
+    },
+    "pc": {
+      "enabled": true
+    }
   },
   "feeds": [],
-  "dashboard": { "host": "127.0.0.1", "port": 8765 }
+  "dashboard": {
+    "host": "127.0.0.1",
+    "port": 8765
+  }
 }

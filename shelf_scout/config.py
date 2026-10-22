@@ -41,6 +41,9 @@ DEFAULTS = {
 # Set "urls"/"skus" in settings.json to replace these. urls[i] is the link shown for skus[i].
 DEFAULTS["retailers"]["sony"].update(
     urls=["https://direct.playstation.com/en-us/buy-consoles/playstation5-pro-console-2-tb"], skus=["1000050928"])
+# Target's PS5 Pro (TCIN confirmed against Target's own API reply). Walmart's item id came from a web search and is unverified.
+DEFAULTS["retailers"]["target"].update(urls=["https://www.target.com/p/-/A-93620188"], skus=["93620188"])
+DEFAULTS["retailers"]["walmart"].update(skus=["11839818124"])
 
 # Smallest allowed value for numeric keys (stops a typo from hammering a retailer or spamming the phone).
 MINIMUMS = {"repeat_seconds": 10, "interval_seconds": 10, "no_poll_alert_minutes": 1, "port": 1}

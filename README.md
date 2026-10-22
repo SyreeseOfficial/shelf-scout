@@ -31,7 +31,7 @@ Over-cap (quiet) alerts skip the SMS channel and the PC alarm sound.
 ## Checking a retailer
 
 ```
-.venv/bin/python -m shelf_scout poll-once sony     # also: bestbuy, amazon
+.venv/bin/python -m shelf_scout poll-once sony     # also: bestbuy, amazon, walmart, target, gamestop, costco
 ```
 
 Prints what the retailer says right now. No alerts, nothing saved. The full service (`python -m shelf_scout`) polls every enabled retailer
@@ -40,10 +40,16 @@ You get one phone message per block, not one per retry.
 
 ### Retailer status (what was actually found)
 
-| Retailer | Data source | Status |
-| --- | --- | --- |
-| Sony (PlayStation Direct) | Sony's own product JSON endpoint (the one its page calls) | Works live, no setup. Page layer skipped: its HTML has no stock state. |
-| Best Buy | Official Products API (free key) | bestbuy.com drops our connection, so the API is the only honest route. **Needs your key** and the SKU: get a key at developer.bestbuy.com, set `retailers.bestbuy.api_key` and `retailers.bestbuy.skus`. Parser tested on hand-written fixtures only. |
-| Amazon | Product page (`/dp/<ASIN>`) | amazon.com serves a bot-check page to us, so it reports `blocked`. Not bypassed. Set `retailers.amazon.skus` (ASIN) anyway; it only helps if Amazon stops blocking. Parser tested on hand-written fixtures only. |
+| Retailer | Data source | Local stock (98036, 10 mi) | Status |
+| --- | --- | --- | --- |
+| Sony (PlayStation Direct) | Sony's own product JSON endpoint (the one its page calls) | No (ships only) | Works live, no setup. Page layer skipped: its HTML has no stock state. |
+| Best Buy | Official Products API (free key) | No (API call is online availability only) | bestbuy.com drops our connection, so the API is the only honest route. **Needs your key** and the SKU: get a key at developer.bestbuy.com, set `retailers.bestbuy.api_key` and `retailers.bestbuy.skus`. Parser tested on hand-written fixtures only. |
+| Amazon | Product page (`/dp/<ASIN>`) | No | amazon.com serves a bot-check page to us, so it reports `blocked`. Not bypassed. Set `retailers.amazon.skus` (ASIN) anyway; it only helps if Amazon stops blocking. Parser tested on hand-written fixtures only. |
+| Target | The JSON endpoints target.com's own page calls (`redsky.target.com`) | **Yes**: nearest 5 stores within `radius_miles` of `zip` (pickup / in-store, store name shown) | Worked live when first tried (real stock + price replies saved as fixtures), then target.com's bot check (PerimeterX) started blocking us after a burst of test requests. It is not bypassed: it backs off and recovers. TCIN `93620188` is set by default. |
+| Walmart | Product page, schema.org JSON-LD (`/ip/<item id>`) | No (page has no per-store data) | walmart.com redirects us to its `/blocked` page, so it reports `blocked`. Not bypassed. Default item id `11839818124` came from a web search and is unverified. Marketplace sellers are labelled from the page. |
+| GameStop | Product page, schema.org JSON-LD | No | gamestop.com answers HTTP 403 (bot check), so it reports `blocked`. Not bypassed. Put the full product link in `retailers.gamestop.urls` (I couldn't find the real PS5 Pro link). |
+| Costco | Product page, schema.org JSON-LD | No | Costco serves pages to us, but lists the console only in short-lived bundles and I found no live link. Put the full link in `retailers.costco.urls` when one appears. Parser tested on hand-written fixtures only. |
+
+Where a retailer has no per-store data, shelf-scout uses the online listing (as in the table). "Blocked" retailers are covered by the tracker layer (Phase 5) and each retailer's own notify-me alerts.
 
 (Full setup, troubleshooting and the rest of the retailer table arrive in later phases.)

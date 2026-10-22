@@ -59,7 +59,7 @@ def raise_if_blocked(r: httpx.Response) -> None:
         hit = next((k for k in BLOCK_BODY_MARKERS if k in text), None) or next((k for k in BLOCK_TITLE_MARKERS if k in page_title), None)
         if hit:
             raise Blocked(f"{where} served a bot-check page (matched {hit!r})")
-    if any(k in str(r.url).lower() for k in ("captcha", "challenge")):
+    if any(k in str(r.url).lower() for k in ("captcha", "challenge", "/blocked")):  # walmart.com/blocked?url=...
         raise Blocked(f"redirected to a challenge page: {r.url}")
 
 
