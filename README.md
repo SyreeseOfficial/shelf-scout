@@ -2,7 +2,9 @@
 
 Free, local PS5 Pro stock alerts. See `PRD.md` (what/why) and `BUILD_PLAN.md` (how/order).
 
-## Setup
+## Quick start
+
+**Install** (Python 3.11+, Linux):
 
 ```
 python -m venv .venv
@@ -10,12 +12,34 @@ python -m venv .venv
 cp settings.example.json settings.json   # optional: defaults work without it
 ```
 
-## Run
+**Configure.** Start it (below) and open http://127.0.0.1:8765/settings, or edit `settings.json`. The must-dos: your ntfy alert and ack topics (see "Phone alerts"), a free Best Buy API key + SKU, and any retailer links you want (GameStop, Costco, Amazon). The first lines of the log (`self-check`) say what is still missing.
+
+**Start:**
 
 ```
 .venv/bin/python -m shelf_scout     # Ctrl+C to stop
-.venv/bin/pytest
 ```
+
+For unattended use, run it as a service instead (see "Run it as a service").
+
+**Test:**
+
+```
+.venv/bin/python -m shelf_scout test            # a fake restock to every channel; repeats until you acknowledge
+.venv/bin/python -m shelf_scout test --quiet    # a fake over-cap restock: one low-priority message
+.venv/bin/python -m shelf_scout doctor          # pass/fail checklist of everything a real alert needs
+.venv/bin/pytest                                # the code's own tests
+```
+
+**Update a product link** (a dead link shows as an error in Bot health): Settings -> Retailers, change the links/ids, Save. It applies at once.
+
+**Stop:** Ctrl+C in the terminal, or `systemctl --user stop shelf-scout`. To pause alerts without stopping the program, use **Stop everything** on the dashboard.
+
+## Dress rehearsal (do this once before the real drop)
+
+1. `.venv/bin/python -m shelf_scout doctor` and read every FAIL line. Blocked retailers are expected to fail (see the retailer table); anything about your channels, ack topic or settings is not.
+2. `.venv/bin/python -m shelf_scout test` (or the dashboard's **Test alert** button). Confirm: the phone push arrives and its link opens; the Discord/Telegram message arrives; the PC alarm plays; it repeats after `repeat_seconds`; tapping **Acknowledge** on the phone stops it within one interval.
+3. Leave the service running for 24 hours, then open the dashboard's **Bot health** panel: every source should be OK or a known, explained block, and the log should have no repeated errors.
 
 ## Dashboard
 

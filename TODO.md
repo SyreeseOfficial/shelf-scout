@@ -30,6 +30,12 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 - [ ] **Trackalacker not used** (no feed, JavaScript page). Not scraped; use its own email/text alerts.
 - [ ] **Sale calendar covers 2026 only.** Add 2027 dates to `shelf_scout/trackers/sale_calendar.json` before January.
 
+## Phase 8 notes
+
+- [ ] **Owner sign-off still needed** (the plan's last check): run the dress rehearsal in the README, and confirm a test alert reached your phone and the ack worked. I can't see your phone.
+- [ ] **`doctor` pings are real.** It sends a quiet "doctor ping" to each enabled channel, including SMS if on.
+- [ ] **Reddit feed often answers 403** to `doctor` and the service (it did once for `curl` too, then worked). It backs off and retries, but it may be an unreliable tracker source. Slickdeals and the PlayStation Blog work.
+
 ## Phase 7 notes
 
 - [ ] **The unit file is tested with a temporary systemd unit, not installed.** The real install (README, "Run it as a service") is yours to run. I did not enable anything on your machine.

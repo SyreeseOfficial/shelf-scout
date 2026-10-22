@@ -9,7 +9,7 @@ from pathlib import Path
 import httpx
 import uvicorn
 
-from . import config, db, pollers
+from . import config, db, doctor, pollers
 from .trackers.feeds import build_feed_pollers
 from .watchdog import Watchdog, startup_check
 from .web.app import create_app
@@ -121,6 +121,7 @@ def main() -> int:
     test.add_argument("--quiet", action="store_true", help="fake an over-cap price (one low-priority message)")
     once = sub.add_parser("poll-once", help="check one retailer now and print the result")
     once.add_argument("retailer", help="sony, bestbuy, amazon, walmart, target, gamestop, costco")
+    sub.add_parser("doctor", help="check that everything needed for a real alert works (sends a test ping to each channel)")
     args = parser.parse_args()
     setup_logging()
     try:
@@ -135,6 +136,8 @@ def main() -> int:
     db.connect(DB_PATH).close()
     log.info("database ready at %s", DB_PATH)
     try:
+        if args.command == "doctor":
+            return doctor.report(asyncio.run(doctor.run_doctor(settings, DB_PATH)))
         if args.command == "poll-once":
             return asyncio.run(poll_once(settings, args.retailer))
         asyncio.run(run_test(settings, args.quiet) if args.command == "test" else run(settings))
