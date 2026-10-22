@@ -42,3 +42,4 @@ class Alert:
     rows: list[Reading]  # sorted by price, then detection time
     test: bool = False
     msrp_cents: int = 89999  # lets notifiers print "+$150" without needing settings
+    notice: str | None = None  # set = a "bot needs attention" message, not a restock: this is the title, rows[0].detail the body

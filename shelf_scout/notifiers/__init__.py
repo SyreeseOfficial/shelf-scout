@@ -41,6 +41,8 @@ def row_text(r: Reading, msrp: int) -> str:
 
 
 def title(alert: Alert) -> str:
+    if alert.notice:
+        return alert.notice
     first = alert.rows[0]
     more = f" (+{len(alert.rows) - 1} more)" if len(alert.rows) > 1 else ""
     what = "PS5 Pro IN STOCK" if alert.loud else "PS5 Pro in stock, over price cap"
@@ -48,6 +50,8 @@ def title(alert: Alert) -> str:
 
 
 def body(alert: Alert) -> str:
+    if alert.notice:
+        return alert.rows[0].detail or ""
     return "\n\n".join(row_text(r, alert.msrp_cents) for r in alert.rows)
 
 

@@ -13,7 +13,8 @@ from pathlib import Path
 
 RETAILERS = ["sony", "bestbuy", "amazon", "walmart", "target", "gamestop", "costco"]
 
-RETAILER_DEFAULT = {"enabled": True, "interval_seconds": 45, "urls": [], "skus": []}
+# api_key is only used by retailers that have an official API (Best Buy); the rest ignore it.
+RETAILER_DEFAULT = {"enabled": True, "interval_seconds": 45, "urls": [], "skus": [], "api_key": ""}
 
 DEFAULTS = {
     "msrp_cents": 89999,
@@ -36,6 +37,10 @@ DEFAULTS = {
     "feeds": [],
     "dashboard": {"host": "127.0.0.1", "port": 8765},
 }
+# Sony's PS5 Pro 2TB (found via direct.playstation.com; see pollers/sony.py for how to re-find it).
+# Set "urls"/"skus" in settings.json to replace these. urls[i] is the link shown for skus[i].
+DEFAULTS["retailers"]["sony"].update(
+    urls=["https://direct.playstation.com/en-us/buy-consoles/playstation5-pro-console-2-tb"], skus=["1000050928"])
 
 # Smallest allowed value for numeric keys (stops a typo from hammering a retailer or spamming the phone).
 MINIMUMS = {"repeat_seconds": 10, "interval_seconds": 10, "no_poll_alert_minutes": 1, "port": 1}

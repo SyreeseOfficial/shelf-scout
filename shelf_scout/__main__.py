@@ -7,7 +7,9 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from . import config, db
+import httpx
+
+from . import config, db, pollers
 from .engine import Engine, fake_reading
 from .models import StockState
 from .notifiers.ntfy import ack_listener
@@ -29,13 +31,42 @@ def setup_logging() -> None:
     for h in handlers:
         h.setFormatter(fmt)
     logging.basicConfig(level=logging.INFO, handlers=handlers)
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # its INFO lines print request URLs, which can contain the Best Buy API key
 
 
 async def run(settings: dict) -> None:
-    # Later phases start pollers and the dashboard here.
-    engine = Engine(settings, db.connect(DB_PATH))
+    # Later phases start the dashboard here.
+    conn = db.connect(DB_PATH)
+    engine = Engine(settings, conn)
     asyncio.create_task(ack_listener(engine))
-    await asyncio.Event().wait()
+    async with httpx.AsyncClient(headers={"User-Agent": pollers.USER_AGENT}, timeout=15, follow_redirects=True) as client:
+        for name, cfg in settings["retailers"].items():
+            if not cfg["enabled"]:
+                continue
+            poller = pollers.build(name, client, lambda: engine.settings)
+            if poller is None:
+                log.info("%s: no poller built yet, skipping", name)
+                continue
+            asyncio.create_task(pollers.run_poller(poller, engine, conn))
+            log.info("%s: polling every ~%ss", name, cfg["interval_seconds"])
+        await asyncio.Event().wait()
+
+
+async def poll_once(settings: dict, retailer: str) -> int:
+    """Check one retailer right now and print what it says. No alerts, nothing saved."""
+    async with httpx.AsyncClient(headers={"User-Agent": pollers.USER_AGENT}, timeout=15, follow_redirects=True) as client:
+        poller = pollers.build(retailer, client, lambda: settings)
+        if poller is None:
+            print(f"No poller for {retailer!r} yet. Available: sony, bestbuy, amazon")
+            return 1
+        try:
+            readings = await poller.check()
+        except pollers.PollError as e:
+            readings = [poller.error("", e)]
+    for r in readings:
+        price = f"${r.price_cents / 100:,.2f}" if r.price_cents is not None else "price unknown"
+        print(f"{r.state.value.upper():<13} {r.retailer} [{r.layer.value}] {price} | {r.seller} | {r.fulfillment.value if r.fulfillment else '-'} | {r.detail}\n{'':14}{r.url}")
+    return 1 if all(r.state is StockState.ERROR for r in readings) else 0
 
 
 async def run_test(settings: dict, quiet: bool) -> None:
@@ -64,6 +95,8 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command")
     test = sub.add_parser("test", help="fire a fake restock through every enabled channel")
     test.add_argument("--quiet", action="store_true", help="fake an over-cap price (one low-priority message)")
+    once = sub.add_parser("poll-once", help="check one retailer now and print the result")
+    once.add_argument("retailer", help="e.g. sony, bestbuy, amazon")
     args = parser.parse_args()
     setup_logging()
     try:
@@ -78,6 +111,8 @@ def main() -> int:
     db.connect(DB_PATH).close()
     log.info("database ready at %s", DB_PATH)
     try:
+        if args.command == "poll-once":
+            return asyncio.run(poll_once(settings, args.retailer))
         asyncio.run(run_test(settings, args.quiet) if args.command == "test" else run(settings))
     except KeyboardInterrupt:
         log.info("stopped (Ctrl+C)")

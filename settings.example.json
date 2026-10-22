@@ -8,7 +8,9 @@
   "radius_miles": 10,
   "quiet_hours": [],
   "retailers": {
-    "bestbuy": { "enabled": true, "interval_seconds": 45, "urls": [], "skus": [] }
+    "sony": { "enabled": true, "interval_seconds": 45, "urls": ["https://direct.playstation.com/en-us/buy-consoles/playstation5-pro-console-2-tb"], "skus": ["1000050928"] },
+    "bestbuy": { "enabled": true, "interval_seconds": 45, "urls": [], "skus": [], "api_key": "" },
+    "amazon": { "enabled": true, "interval_seconds": 45, "urls": [], "skus": [] }
   },
   "channels": {
     "ntfy": { "enabled": true, "server": "https://ntfy.sh", "alert_topic": "", "ack_topic": "" },

@@ -87,6 +87,12 @@ class Engine:
         log.info("event %s opened: %s in stock at %s (%s)", ev.id, r.retailer, r.price_cents, "LOUD" if loud else "quiet")
         await self._dispatch()
 
+    async def notice(self, title: str, detail: str, url: str = "") -> None:
+        """Tell the owner something about the bot itself (e.g. a retailer is blocking us). Quiet, sent once, no repeat."""
+        row = Reading("bot", StockState.ERROR, Layer.PAGE, url, None, None, None, detail, self._clock())
+        alert = Alert(event_id=0, loud=False, rows=[row], msrp_cents=self.settings["msrp_cents"], notice=title)
+        await fan_out(self._notifiers if self._notifiers is not None else build_notifiers(self.settings), alert)
+
     # ---- ack -------------------------------------------------------------------------------
 
     async def ack(self, event_id: int | None = None) -> None:
