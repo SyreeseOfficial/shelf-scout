@@ -23,6 +23,13 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 - [ ] **Costco link.** Costco only lists the console in short-lived bundles. Put the link in `retailers.costco.urls` when one is listed.
 - [ ] **Walmart item id.** Default `11839818124` came from a web search. Confirm it is the plain PS5 Pro console.
 
+## Phase 5 notes
+
+- [ ] **Tracker alerts untested against a real restock post.** Feed parsing is tested on real feed captures, but the "PS5 Pro + restock word" match was only exercised with made-up titles. Watch what lands in the log after the first real drop and tune `RESTOCK` in `trackers/feeds.py`.
+- [ ] **Reddit rate-limits intermittently** (403/429 after bursts). The back-off handles it, but if Reddit blocks often, raise that feed's `interval_seconds`.
+- [ ] **Trackalacker not used** (no feed, JavaScript page). Not scraped; use its own email/text alerts.
+- [ ] **Sale calendar covers 2026 only.** Add 2027 dates to `shelf_scout/trackers/sale_calendar.json` before January.
+
 ## Untested against live sites
 
 - [ ] **Target in-stock case.** `tests/fixtures/target/in_stock.json` and `nearby.json` are hand-written from the real out-of-stock reply. Check against a real in-stock reply when one exists.

@@ -34,7 +34,12 @@ DEFAULTS = {
                 "smtp_user": "", "smtp_password": ""},
         "pc": {"enabled": True},
     },
-    "feeds": [],
+    "announcement_heads_up": False,   # send a quiet message when a news feed posts a new PS5 item
+    "feeds": [
+        {"name": "Reddit r/consoledeals", "url": "https://www.reddit.com/r/consoledeals/new.rss", "type": "rss", "role": "alert", "interval_seconds": 60},
+        {"name": "Slickdeals", "url": "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1&q=ps5+pro", "type": "rss", "role": "alert", "interval_seconds": 60},
+        {"name": "PlayStation Blog", "url": "https://blog.playstation.com/feed/", "type": "rss", "role": "news", "interval_seconds": 900},
+    ],
     "dashboard": {"host": "127.0.0.1", "port": 8765},
 }
 # Sony's PS5 Pro 2TB (found via direct.playstation.com; see pollers/sony.py for how to re-find it).
@@ -105,10 +110,35 @@ def _check_quiet_hours(items):
             _fail(f"{key}.mode", f'must be "mute" or "downgrade" (got {q.get("mode")!r})')
 
 
+def _check_feeds(items):
+    """Each feed needs a name and URL; type/role/interval get defaults. Names are unique (each is a health row)."""
+    names = set()
+    for i, f in enumerate(items):
+        key = f"feeds[{i}]"
+        if not isinstance(f, dict):
+            _fail(key, 'must look like {"name": "My feed", "url": "https://...", "type": "rss"}')
+        for field in ("name", "url"):
+            if not (isinstance(f.get(field), str) and f[field].strip()):
+                _fail(f"{key}.{field}", "must be some text")
+        if not f["url"].startswith(("http://", "https://")):
+            _fail(f"{key}.url", f'must start with http:// or https:// (got {f["url"]!r})')
+        if f["name"] in names or f["name"] in RETAILERS:
+            _fail(f"{key}.name", f'{f["name"]!r} is already used by another feed or retailer: names must be unique')
+        names.add(f["name"])
+        if f.setdefault("type", "rss") != "rss":
+            _fail(f"{key}.type", f'must be "rss" (RSS or Atom; got {f["type"]!r})')
+        if f.setdefault("role", "alert") not in ("alert", "news"):
+            _fail(f"{key}.role", f'must be "alert" or "news" (got {f["role"]!r})')
+        interval = f.setdefault("interval_seconds", 60)
+        if not (isinstance(interval, int) and not isinstance(interval, bool) and interval >= MINIMUMS["interval_seconds"]):
+            _fail(f"{key}.interval_seconds", f"must be a whole number, at least {MINIMUMS['interval_seconds']} (got {interval!r})")
+
+
 def validate(user: dict) -> dict:
     """Return DEFAULTS overlaid with `user`, or raise ConfigError."""
     settings = _merge(DEFAULTS, user, "")
     _check_quiet_hours(settings["quiet_hours"])
+    _check_feeds(settings["feeds"])
     return settings
 
 

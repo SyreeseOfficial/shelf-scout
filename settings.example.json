@@ -89,9 +89,32 @@
       "enabled": true
     }
   },
-  "feeds": [],
+  "feeds": [
+    {
+      "name": "Reddit r/consoledeals",
+      "url": "https://www.reddit.com/r/consoledeals/new.rss",
+      "type": "rss",
+      "role": "alert",
+      "interval_seconds": 60
+    },
+    {
+      "name": "Slickdeals",
+      "url": "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1&q=ps5+pro",
+      "type": "rss",
+      "role": "alert",
+      "interval_seconds": 60
+    },
+    {
+      "name": "PlayStation Blog",
+      "url": "https://blog.playstation.com/feed/",
+      "type": "rss",
+      "role": "news",
+      "interval_seconds": 900
+    }
+  ],
   "dashboard": {
     "host": "127.0.0.1",
     "port": 8765
-  }
+  },
+  "announcement_heads_up": false
 }

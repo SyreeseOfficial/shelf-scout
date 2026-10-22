@@ -10,6 +10,7 @@ from pathlib import Path
 import httpx
 
 from . import config, db, pollers
+from .trackers.feeds import build_feed_pollers
 from .engine import Engine, fake_reading
 from .models import StockState
 from .notifiers.ntfy import ack_listener
@@ -49,6 +50,9 @@ async def run(settings: dict) -> None:
                 continue
             asyncio.create_task(pollers.run_poller(poller, engine, conn))
             log.info("%s: polling every ~%ss", name, cfg["interval_seconds"])
+        for poller in build_feed_pollers(client, lambda: engine.settings, conn, engine.notice):
+            asyncio.create_task(pollers.run_poller(poller, engine, conn))
+            log.info("feed %s: checking every ~%ss (%s)", poller.retailer, poller.cfg["interval_seconds"], poller.feed["role"])
         await asyncio.Event().wait()
 
 

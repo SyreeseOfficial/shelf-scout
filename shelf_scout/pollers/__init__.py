@@ -67,6 +67,7 @@ class Poller:
     """Subclasses set `retailer` and `layer`, and implement check()."""
     retailer: str
     layer: Layer
+    empty_ok = False  # True for sources where "no readings this time" is normal (tracker feeds)
 
     def __init__(self, client: httpx.AsyncClient, get_settings):
         self.client = client
@@ -151,8 +152,9 @@ async def poll_step(poller: Poller, engine, conn, st: RunState) -> float:
         if not isinstance(e, PollError):
             log.exception("%s poller crashed; will retry", name)
         readings = [poller.error("", e)]
-    readings = readings or [poller.error("", PollError("poller returned no readings (bug in the poller)"))]
-    ok = any(r.state is not StockState.ERROR for r in readings)
+    if not readings and not poller.empty_ok:
+        readings = [poller.error("", PollError("poller returned no readings (bug in the poller)"))]
+    ok = not readings or any(r.state is not StockState.ERROR for r in readings)
     blocked = any((r.detail or "").startswith("blocked") for r in readings if r.state is StockState.ERROR)
     st.fails = 0 if ok else st.fails + 1
     _record(conn, name, readings, st, ok, blocked)
@@ -161,7 +163,7 @@ async def poll_step(poller: Poller, engine, conn, st: RunState) -> float:
         if st.blocked:
             log.info("%s: recovered, back to normal polling", name)
         st.blocked = False
-        log.info("%s: poll ok, %s", name, ", ".join(f"{r.state.value}" for r in readings))
+        log.info("%s: poll ok, %s", name, ", ".join(f"{r.state.value}" for r in readings) or "nothing new")
         wait = interval
     else:
         wait = min(interval * 2 ** st.fails, MAX_BACKOFF)  # doubles each failure, resets on success

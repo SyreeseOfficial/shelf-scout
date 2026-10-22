@@ -52,4 +52,16 @@ You get one phone message per block, not one per retry.
 
 Where a retailer has no per-store data, shelf-scout uses the online listing (as in the table). "Blocked" retailers are covered by the tracker layer (Phase 5) and each retailer's own notify-me alerts.
 
+## Tracker feeds and news (works even when retailers block us)
+
+`settings.json` -> `feeds` lists free RSS/Atom feeds. Each gets its own poller, back-off and `health` row (named after the feed), so a dead feed shows as an error, never as "no stock".
+
+| Role | What it does |
+| --- | --- |
+| `"alert"` (default) | A new item whose title mentions a PS5 Pro **and** a restock word (restock, in stock, available, live) sends a **loud** alert labelled `unverified (tracker)` with no price. The alert closes after 30 min so the next hit alerts again. Old items (over 30 min) are ignored, so a restart doesn't replay history. |
+| `"news"` | PS5 items are saved to the `announcements` table for the dashboard. Set `announcement_heads_up: true` for a quiet message on each new one (off by default). |
+
+Defaults: Reddit r/consoledeals and Slickdeals (alert), the PlayStation Blog (news). All three work without an account. Reddit sometimes answers 403/429 when it's busy; shelf-scout backs off and retries. `type` is `rss` only. Trackalacker has no feed and builds its page with JavaScript, so keep using its own email/text alerts (the owner checklist covers this).
+The sale calendar (Black Friday, Cyber Monday, ...) is `shelf_scout/trackers/sale_calendar.json`: add next year's dates there.
+
 (Full setup, troubleshooting and the rest of the retailer table arrive in later phases.)
