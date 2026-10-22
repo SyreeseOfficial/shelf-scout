@@ -22,4 +22,7 @@ dev = ["pytest"]
 shelf-scout = "shelf_scout.__main__:main"
 
 [tool.setuptools]
-packages = ["shelf_scout"]  # ponytail: add subpackages (notifiers, pollers, ...) as they appear
+packages = ["shelf_scout", "shelf_scout.notifiers"]  # ponytail: add subpackages (pollers, ...) as they appear
+
+[tool.setuptools.package-data]
+"shelf_scout.notifiers" = ["alarm.wav"]

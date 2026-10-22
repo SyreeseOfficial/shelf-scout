@@ -41,3 +41,4 @@ class Alert:
     loud: bool
     rows: list[Reading]  # sorted by price, then detection time
     test: bool = False
+    msrp_cents: int = 89999  # lets notifiers print "+$150" without needing settings
