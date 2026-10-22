@@ -19,9 +19,9 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 
 ## Owner actions (resale / extra sources)
 
-- [ ] **eBay key.** Sign up at developer.ebay.com, create a Production keyset, put `CLIENT_ID:CLIENT_SECRET` in Settings -> Retailers -> ebay -> API key, turn it on, then `python -m shelf_scout poll-once ebay`. The parser is tested on hand-written fixtures; check it against the first real reply.
-- [ ] **Telegram restock channel.** The `telegram` feed type works (tested on a real channel page), but I couldn't find a verified public PS5 Pro restock channel. Find one in Telegram, open `https://t.me/s/<channel>` in a browser to confirm it shows messages, then add it in Settings -> Feeds (role: alert).
-- [ ] **Craigslist: set up its own alerts.** Craigslist blocks us (HTTP 403 on RSS), so it is not bypassed. Save a "ps5 pro" search for Seattle, Everett, Eastside and Tacoma and turn on email alerts.
+- [ ] **eBay key. TABLED: eBay takes at least 1 day to approve a developer account (as of 2026-10-22).** Come back when approved. Sign up at developer.ebay.com, create a Production keyset, put `CLIENT_ID:CLIENT_SECRET` in Settings -> Retailers -> ebay -> API key, turn it on, then `python -m shelf_scout poll-once ebay`. The parser is tested on hand-written fixtures; check it against the first real reply.
+- [ ] **Telegram restock channel: parked.** The `telegram` feed type works, but I found no live public PS5 Pro channel with a web view (`t.me/s/ps5usa` has been dead since 2021; the Stock Informer one is invite-only, which we can't read). If you find a public one, open `https://t.me/s/<channel>` in a browser; if it shows recent messages, add it in Settings -> Feeds (role: alert).
+- [x] **Craigslist: set up its own alerts.** Done by owner. Craigslist blocks us (HTTP 403 on RSS), so it is not bypassed. Owner saved "ps5 pro" searches with email alerts.
 - [ ] **eBay filters are constants** in `pollers/ebay.py` (95% feedback, 10+ ratings, price over half of MSRP, junk-word list). Tell me if real listings get filtered out.
 
 ## Owner actions (Phase 4)
