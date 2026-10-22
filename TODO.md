@@ -4,9 +4,9 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 
 ## Owner actions
 
-- [ ] **Phone setup (ntfy).** App is installed, nothing else. Subscribe to a long random alert topic, pick a second random ack topic, put both in Settings -> Channels. Then run `python -m shelf_scout test` and confirm the push, the repeat and Acknowledge. (README: "Phone alerts".)
+- [x] **Phone setup (ntfy).** Done: alerts reach the phone.
 - [ ] **Best Buy API key.** Couldn't get one. SKU `12916962` is saved, and Best Buy is disabled in `settings.json` until a key exists. Without it, rely on the tracker feeds and Best Buy's own notify-me.
-- [ ] **Amazon ASIN.** Find the PS5 Pro ASIN (the 10 characters after `/dp/`) and set `retailers.amazon.skus`. `B0DGY63Z2H` came from an old deal post and is unverified.
+- [x] **Amazon ASINs.** Owner-confirmed: `B0DSM36XCH` (renewed), `B0F1H9TF2X` and `B0F1H8ZHG8` (2-controller bundles). Amazon stays disabled (blocked).
 
 ## Blocked sources (not bypassed on purpose)
 
@@ -19,9 +19,9 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 
 ## Owner actions (Phase 4)
 
-- [ ] **GameStop link.** Find the PS5 Pro product link on gamestop.com and put it in `retailers.gamestop.urls`. I couldn't find the real one.
-- [ ] **Costco link.** Costco only lists the console in short-lived bundles. Put the link in `retailers.costco.urls` when one is listed.
-- [ ] **Walmart item id.** Default `11839818124` came from a web search. Confirm it is the plain PS5 Pro console.
+- [x] **GameStop link.** Saved.
+- [x] **Costco link.** Bundle `4000352765` saved; `poll-once costco` reads it (out of stock).
+- [x] **Walmart items.** No plain new PS5 Pro listing exists. Tracking 4 listings (open box, disc-drive bundle, 30th anniversary, 2-controller bundle). Walmart still serves a bot check.
 
 ## Phase 5 notes
 
