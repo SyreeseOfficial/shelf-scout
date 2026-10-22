@@ -224,7 +224,7 @@ def test_target_garbage_and_unknown_status_are_errors():
 
 
 def test_target_stores_and_price():
-    assert target.parse_stores(read("target/nearby.json")) == ["338", "2090", "1810"]
+    assert target.parse_stores(read("target/nearby.json")) == ["338", "2090", "1810"][:target.MAX_STORES]
     with pytest.raises(ParseError):
         target.parse_stores(read("target/garbage.json"))
     assert target.parse_price(read("target/pdp.json")) == 89999
