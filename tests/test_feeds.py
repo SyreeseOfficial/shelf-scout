@@ -162,3 +162,19 @@ def test_feed_settings_validation_names_the_bad_key():
             config.validate({"feeds": [bad]})
     with pytest.raises(config.ConfigError, match="unique"):
         config.validate({"feeds": [{"name": "A", "url": "https://a"}, {"name": "A", "url": "https://b"}]})
+
+
+def test_parse_telegram_real_capture():
+    items = feeds.parse_telegram((FIX / "telegram_channel.html").read_text())
+    assert len(items) == 2 and items[0].link.startswith("https://t.me/durov/")
+    assert items[0].title and "<" not in items[0].title and items[0].published
+
+
+def test_parse_telegram_restock_post_and_wrong_page():
+    page = ('<div class="tgme_widget_message" data-post="chan/7"><div class="tgme_widget_message_text js-message_text">'
+            'PS5 Pro <b>restock</b> at Target<br/>&amp; Walmart</div><time datetime="2026-10-22T13:09:16+00:00"></time></div>')
+    (item,) = feeds.parse_telegram(page)
+    assert item.title == "PS5 Pro restock at Target & Walmart" and item.link == "https://t.me/chan/7"
+    assert feeds.PS5_PRO.search(item.title) and feeds.RESTOCK.search(item.title)
+    with pytest.raises(ParseError):
+        feeds.parse_telegram("<html>hello</html>")

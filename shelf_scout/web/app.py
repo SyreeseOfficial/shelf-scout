@@ -108,7 +108,8 @@ def build_settings(form: dict, cur: dict) -> dict:
         if f"f{i}_remove" in form or not form.get(f"f{i}_name", "").strip():
             continue
         base = cur["feeds"][i] if i < len(cur["feeds"]) else {"enabled": True, "interval_seconds": 60}
-        feeds.append({"name": form[f"f{i}_name"].strip(), "url": form.get(f"f{i}_url", "").strip(), "type": "rss",
+        url = form.get(f"f{i}_url", "").strip()
+        feeds.append({"name": form[f"f{i}_name"].strip(), "url": url, "type": "telegram" if "//t.me/s/" in url else "rss",
                       "role": form.get(f"f{i}_role", "alert"), "enabled": f"f{i}_enabled" in form,
                       "interval_seconds": form_value(form, f"f{i}_interval", base["interval_seconds"])})
     new["feeds"] = feeds

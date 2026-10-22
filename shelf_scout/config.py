@@ -125,8 +125,8 @@ def _check_feeds(items):
         if f["name"] in names or f["name"] in RETAILERS:
             _fail(f"{key}.name", f'{f["name"]!r} is already used by another feed or retailer: names must be unique')
         names.add(f["name"])
-        if f.setdefault("type", "rss") != "rss":
-            _fail(f"{key}.type", f'must be "rss" (RSS or Atom; got {f["type"]!r})')
+        if f.setdefault("type", "rss") not in ("rss", "telegram"):
+            _fail(f"{key}.type", f'must be "rss" (RSS or Atom) or "telegram" (a https://t.me/s/<channel> page; got {f["type"]!r})')
         if f.setdefault("role", "alert") not in ("alert", "news"):
             _fail(f"{key}.role", f'must be "alert" or "news" (got {f["role"]!r})')
         if not isinstance(f.setdefault("enabled", True), bool):

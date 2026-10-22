@@ -8,9 +8,10 @@ the feed), so a dead feed shows as an error there, never as "no stock". Two role
   "alert" (default): items that mention a PS5 Pro AND a restock word become an in-stock Reading.
   "news": PS5 items are saved to `announcements` for the dashboard (and optionally a heads-up message).
 
-ponytail: RSS/Atom only. Trackalacker (named in the PRD) has no feed and renders its listings with
+ponytail: RSS/Atom plus Telegram channel pages (t.me/s/<name>, no login, public channels only). Trackalacker (named in the PRD) has no feed and renders its listings with
 JavaScript, so use its own email/text alerts instead. Add an "html" type when a source needs it.
 """
+import html
 import logging
 import re
 import time
@@ -68,6 +69,21 @@ def parse_feed(text: str) -> list[Item]:
     raise ParseError(f"the feed's top-level tag is <{root.tag}>, not RSS or Atom. Check the URL in settings.json")
 
 
+def parse_telegram(text: str) -> list[Item]:
+    """A public channel's web view (https://t.me/s/<channel>) as feed items: one per message, link = the post."""
+    out = []
+    for block in text.split('data-post="')[1:]:
+        post = block.split('"', 1)[0]
+        body = re.search(r'tgme_widget_message_text[^>]*>(.*?)</div>', block, re.S)
+        when = re.search(r'<time datetime="([^"]+)"', block)
+        if body:
+            title = html.unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<br\s*/?>", " ", body.group(1))))
+            out.append(Item(" ".join(title.split()), f"https://t.me/{post}", _when(when and when.group(1))))
+    if not out and "tgme_page" not in text and "tgme_widget" not in text:
+        raise ParseError("not a Telegram channel page. Use the https://t.me/s/<channel> form of the link (public channels only)")
+    return out
+
+
 class FeedPoller(Poller):
     layer = Layer.TRACKER
     empty_ok = True   # "nothing new" is the normal state of a feed, not a failure
@@ -89,7 +105,8 @@ class FeedPoller(Poller):
         return {**self.feed, "enabled": False}
 
     async def check(self) -> list[Reading]:
-        items = parse_feed((await self.get(self.cfg["url"])).text)
+        parse = parse_telegram if self.cfg["type"] == "telegram" else parse_feed
+        items = parse((await self.get(self.cfg["url"])).text)
         now = time.time()
         new = [i for i in items if i.link and i.link not in self.seen]
         self.seen.update(i.link for i in new)
