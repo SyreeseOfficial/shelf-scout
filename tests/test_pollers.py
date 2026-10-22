@@ -297,3 +297,24 @@ def test_a_crash_outside_check_only_stops_that_poller_and_it_restarts(tmp_path, 
 
     n, task = asyncio.run(run())
     assert n >= 3  # first call crashed, the loop survived and kept polling
+
+
+def test_sale_day_polls_faster_except_burst_exempt(tmp_path, monkeypatch):
+    from shelf_scout import pollers
+    from shelf_scout.engine import fake_reading
+    good = [fake_reading("fake", state=StockState.OUT_OF_STOCK)]
+    poller, engine, conn, _ = make(tmp_path, [good] * 3)
+    monkeypatch.setattr(pollers, "is_sale_day", lambda: False)
+    normal = step(poller, engine, conn, RunState())
+    monkeypatch.setattr(pollers, "is_sale_day", lambda: True)
+    burst = step(poller, engine, conn, RunState())
+    assert round(normal / 60) == 1 and round(burst / 30) == 1  # 60 s -> 30 s, within jitter
+    poller.burst_ok = False
+    assert round(step(poller, engine, conn, RunState()) / 60) == 1  # exempt (Target) stays slow
+
+
+def test_is_sale_day():
+    from datetime import datetime
+    from shelf_scout.trackers.events import is_sale_day
+    assert is_sale_day(datetime(2026, 11, 27, 9).timestamp())   # Black Friday
+    assert not is_sale_day(datetime(2026, 11, 28, 9).timestamp())

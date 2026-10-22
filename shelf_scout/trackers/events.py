@@ -24,3 +24,9 @@ def upcoming(conn, now: float | None = None, calendar: Path = CALENDAR) -> list[
         items.append({"when": datetime.fromtimestamp(r["published"]).date().isoformat(), "kind": "news",
                       "title": r["title"], "note": r["source"], "url": r["url"]})
     return sorted(items, key=lambda i: i["when"])
+
+
+def is_sale_day(now: float | None = None, calendar: Path = CALENDAR) -> bool:
+    """True if today (local) is a date in the sale calendar."""
+    today = datetime.fromtimestamp(time.time() if now is None else now).date().isoformat()
+    return any(e["date"] == today for e in json.loads(calendar.read_text()))

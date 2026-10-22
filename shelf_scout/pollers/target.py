@@ -75,6 +75,7 @@ def parse_price(text: str) -> int | None:
 
 class Target(Poller):
     retailer, layer = "target", Layer.ENDPOINT
+    burst_ok = False  # PerimeterX blocked us once after a few quick requests (see TODO.md)
 
     def __init__(self, *a):
         super().__init__(*a)

@@ -16,12 +16,14 @@ from decimal import Decimal, InvalidOperation
 import httpx
 
 from ..models import Layer, Reading, StockState
+from ..trackers.events import is_sale_day
 
 log = logging.getLogger("shelf_scout.poll")
 
 # Honest and identifiable on purpose: no browser impersonation. If a retailer won't talk to this, we back off.
 USER_AGENT = "shelf-scout/0.1 (personal PS5 Pro stock alert; about one request a minute)"
 MAX_BACKOFF = 30 * 60
+BURST_FACTOR = 2  # ponytail: fixed; make it a setting if you want to tune it. Polls this many times faster on sale days
 BLOCK_STATUSES = {403, 429, 503}
 # Challenge pages often come back as HTTP 200 (Amazon does), so status codes alone would miss them.
 BLOCK_BODY_MARKERS = ("validatecaptcha", "enter the characters you see below", "px-captcha", "_incapsula_resource", "cf-chl")
@@ -68,6 +70,7 @@ class Poller:
     retailer: str
     layer: Layer
     empty_ok = False  # True for sources where "no readings this time" is normal (tracker feeds)
+    burst_ok = True   # False for sites that have already blocked us once (Target): no faster polling on sale days
 
     def __init__(self, client: httpx.AsyncClient, get_settings):
         self.client = client
@@ -168,7 +171,7 @@ async def poll_step(poller: Poller, engine, conn, st: RunState) -> float:
             log.info("%s: recovered, back to normal polling", name)
         st.blocked = False
         log.info("%s: poll ok, %s", name, ", ".join(f"{r.state.value}" for r in readings) or "nothing new")
-        wait = interval
+        wait = interval / BURST_FACTOR if poller.burst_ok and is_sale_day() else interval
     else:
         wait = min(interval * 2 ** st.fails, MAX_BACKOFF)  # doubles each failure, resets on success
         log.warning("%s: poll failed (%s). Retrying in %.0fs", name, readings[0].detail, wait)
