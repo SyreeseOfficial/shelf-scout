@@ -4,8 +4,8 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 
 ## Owner actions
 
-- [ ] **Best Buy API key.** Create a free key at https://developer.bestbuy.com/ and set `retailers.bestbuy.api_key` in `settings.json`. Until then Best Buy shows an error in `health`.
-- [ ] **Best Buy SKU.** Find the PS5 Pro SKU (the number after `skuId=` in its product page URL) and set `retailers.bestbuy.skus`. I couldn't find the real one.
+- [ ] **Phone setup (ntfy).** App is installed, nothing else. Subscribe to a long random alert topic, pick a second random ack topic, put both in Settings -> Channels. Then run `python -m shelf_scout test` and confirm the push, the repeat and Acknowledge. (README: "Phone alerts".)
+- [ ] **Best Buy API key.** Couldn't get one. SKU `12916962` is saved, and Best Buy is disabled in `settings.json` until a key exists. Without it, rely on the tracker feeds and Best Buy's own notify-me.
 - [ ] **Amazon ASIN.** Find the PS5 Pro ASIN (the 10 characters after `/dp/`) and set `retailers.amazon.skus`. `B0DGY63Z2H` came from an old deal post and is unverified.
 
 ## Blocked sources (not bypassed on purpose)
