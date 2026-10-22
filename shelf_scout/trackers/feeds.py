@@ -82,15 +82,19 @@ class FeedPoller(Poller):
 
     @property
     def cfg(self) -> dict:
-        return self.feed
+        """The feed's current settings, found by name so dashboard edits apply live. Deleted = idle."""
+        for f in self.get_settings()["feeds"]:
+            if f["name"] == self.retailer:
+                return f
+        return {**self.feed, "enabled": False}
 
     async def check(self) -> list[Reading]:
-        items = parse_feed((await self.get(self.feed["url"])).text)
+        items = parse_feed((await self.get(self.cfg["url"])).text)
         now = time.time()
         new = [i for i in items if i.link and i.link not in self.seen]
         self.seen.update(i.link for i in new)
         first, self.first = self.first, False
-        if self.feed["role"] == "news":
+        if self.cfg["role"] == "news":
             await self.save_news(new, now, first)
             return []
         out = []

@@ -77,6 +77,10 @@ class Poller:
     def cfg(self) -> dict:
         return self.get_settings()["retailers"][self.retailer]
 
+    @property
+    def enabled(self) -> bool:
+        return self.cfg.get("enabled", True)
+
     async def check(self) -> list[Reading]:
         raise NotImplementedError
 
@@ -183,4 +187,7 @@ async def poll_step(poller: Poller, engine, conn, st: RunState) -> float:
 async def run_poller(poller: Poller, engine, conn) -> None:
     st = RunState()
     while True:
+        if engine.paused or not poller.enabled:  # re-checked every loop, so the dashboard's switches apply live
+            await asyncio.sleep(2)
+            continue
         await asyncio.sleep(await poll_step(poller, engine, conn, st))

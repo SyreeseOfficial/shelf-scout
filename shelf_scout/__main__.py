@@ -1,16 +1,17 @@
 """`python -m shelf_scout` starts the service."""
 import argparse
 import asyncio
-import dataclasses
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import httpx
+import uvicorn
 
 from . import config, db, pollers
 from .trackers.feeds import build_feed_pollers
+from .web.app import create_app
 from .engine import Engine, fake_reading
 from .models import StockState
 from .notifiers.ntfy import ack_listener
@@ -35,25 +36,49 @@ def setup_logging() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)  # its INFO lines print request URLs, which can contain the Best Buy API key
 
 
+async def serve_dashboard(engine: Engine, conn) -> None:
+    """The dashboard runs inside this same process and event loop. If it can't start, alerts keep working."""
+    host, port = engine.settings["dashboard"]["host"], engine.settings["dashboard"]["port"]
+    if host not in ("127.0.0.1", "localhost", "::1"):
+        log.warning("DASHBOARD IS EXPOSED: host is %r, not 127.0.0.1. There is no login, so anyone who can reach "
+                    "%s:%s can read and change your settings (including secrets). Set dashboard.host back to 127.0.0.1.", host, host, port)
+    app = create_app(engine, conn, SETTINGS_PATH)
+    server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_level="warning"))
+    server.install_signal_handlers = lambda: None  # Ctrl+C is handled by main(); uvicorn must not grab it
+    try:
+        log.info("dashboard at http://%s:%s/", host, port)
+        await server.serve()
+    except (SystemExit, OSError) as e:  # uvicorn exits (not raises) when the port is taken
+        log.error("dashboard could not start on %s:%s (%s). Is another program using that port? "
+                  "Alerts still work; change dashboard.port in settings.json and restart.", host, port, e)
+
+
 async def run(settings: dict) -> None:
-    # Later phases start the dashboard here.
     conn = db.connect(DB_PATH)
     engine = Engine(settings, conn)
     asyncio.create_task(ack_listener(engine))
+    asyncio.create_task(serve_dashboard(engine, conn))
+    started: set[str] = set()   # retailers / feeds that already have a poller task
     async with httpx.AsyncClient(headers={"User-Agent": pollers.USER_AGENT}, timeout=15, follow_redirects=True) as client:
-        for name, cfg in settings["retailers"].items():
-            if not cfg["enabled"]:
-                continue
-            poller = pollers.build(name, client, lambda: engine.settings)
-            if poller is None:
-                log.info("%s: no poller built yet, skipping", name)
-                continue
-            asyncio.create_task(pollers.run_poller(poller, engine, conn))
-            log.info("%s: polling every ~%ss", name, cfg["interval_seconds"])
-        for poller in build_feed_pollers(client, lambda: engine.settings, conn, engine.notice):
-            asyncio.create_task(pollers.run_poller(poller, engine, conn))
-            log.info("feed %s: checking every ~%ss (%s)", poller.retailer, poller.cfg["interval_seconds"], poller.feed["role"])
-        await asyncio.Event().wait()
+        while True:
+            # Re-checked every few seconds so a retailer or feed switched on (or added) in Settings starts without a restart.
+            for name, cfg in engine.settings["retailers"].items():
+                if name in started or not cfg["enabled"]:
+                    continue
+                started.add(name)
+                poller = pollers.build(name, client, lambda: engine.settings)
+                if poller is None:
+                    log.info("%s: no poller built yet, skipping", name)
+                    continue
+                asyncio.create_task(pollers.run_poller(poller, engine, conn))
+                log.info("%s: polling every ~%ss", name, cfg["interval_seconds"])
+            for poller in build_feed_pollers(client, lambda: engine.settings, conn, engine.notice):
+                if poller.retailer in started or not poller.enabled:
+                    continue
+                started.add(poller.retailer)
+                asyncio.create_task(pollers.run_poller(poller, engine, conn))
+                log.info("feed %s: checking every ~%ss (%s)", poller.retailer, poller.cfg["interval_seconds"], poller.cfg["role"])
+            await asyncio.sleep(5)
 
 
 async def poll_once(settings: dict, retailer: str) -> int:
@@ -77,21 +102,12 @@ async def run_test(settings: dict, quiet: bool) -> None:
     """Push one fake restock through the real pipeline: DB, every enabled channel, repeats, ack."""
     engine = Engine(settings, db.connect(DB_PATH))
     listener = asyncio.create_task(ack_listener(engine))
-    # A quiet test needs a price just over the cap; a loud one sits right at MSRP.
-    reading = fake_reading(price_cents=config.cap_cents(settings) + 10000 if quiet else settings["msrp_cents"])
     try:
-        await engine.handle_reading(reading, test=True)
+        await engine.fire_test(quiet)
         if quiet:
             log.info("quiet test sent: one low-priority message, no repeat")
-        else:
-            log.info("loud test sent. It repeats every %ss until you tap Acknowledge on your phone (Ctrl+C to give up)",
-                     settings["repeat_seconds"])
-            await engine.wait_idle()
-            log.info("acknowledged - test finished")
     finally:
         listener.cancel()
-        # Close the fake event so the DB doesn't show it as still in stock.
-        await engine.handle_reading(dataclasses.replace(reading, state=StockState.OUT_OF_STOCK))
 
 
 def main() -> int:

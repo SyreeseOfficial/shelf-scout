@@ -17,6 +17,12 @@ cp settings.example.json settings.json   # optional: defaults work without it
 .venv/bin/pytest
 ```
 
+## Dashboard
+
+With the service running, open **http://127.0.0.1:8765/**. It shows live stock per retailer, price vs MSRP, restock history, bot health, upcoming sale days and PlayStation news, and refreshes itself every 5 seconds. Buttons: **Acknowledge** (stops the repeats), **Test alert**, **Stop everything** / **Resume** (pauses all polling and repeats; a restart resumes).
+
+**Settings** (`/settings`) edits every setting (prices in dollars, quiet-hours windows, retailers and their links, channels, feeds) and applies it immediately, with no restart. It writes `settings.json` for you. Secrets (API keys, topics, webhooks, passwords) show only their last 4 characters; leave a secret box blank to keep it. The one exception is the dashboard's own address (`dashboard.host` / `port`), which needs a restart. There is no login, so keep the host at `127.0.0.1`: if you change it, shelf-scout logs a loud warning. Pages refuse form posts that come from other websites.
+
 ## Phone alerts (ntfy)
 
 1. Install the ntfy app. Subscribe to a long random alert topic (e.g. `ps5-alert-x7k2q9m4w8`).

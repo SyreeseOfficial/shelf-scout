@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 from .config import cap_cents
@@ -60,6 +60,7 @@ class Engine:
         self._open: dict[tuple[str, str], _Event] = {}  # one open event per (retailer, listing url)
         self._repeat: asyncio.Task | None = None
         self._last_alert_ids: set[int] = set()  # events in the most recent alert; one Ack covers them all
+        self.paused = False  # "Stop everything": pollers idle and loud alerts stop repeating until resume()
 
     # ---- readings in -----------------------------------------------------------------------
 
@@ -171,6 +172,37 @@ class Engine:
         if self._repeat and not self._loud_pending():
             self._repeat.cancel()
             self._repeat = None
+
+    @property
+    def waiting(self) -> int:
+        """How many loud events are still waiting for an Acknowledge."""
+        return sum(e.loud for e in self._pending())
+
+    def pause(self) -> None:
+        self.paused = True
+        if self._repeat:
+            self._repeat.cancel()
+            self._repeat = None
+        log.info("PAUSED: pollers idle and alerts stop repeating until you resume")
+
+    def resume(self) -> None:
+        self.paused = False
+        if self._loud_pending() and (self._repeat is None or self._repeat.done()):
+            self._repeat = asyncio.create_task(self._repeat_loop())  # unacked alerts pick up where they left off
+        log.info("RESUMED")
+
+    async def fire_test(self, quiet: bool = False) -> None:
+        """A fake restock through the real pipeline (DB, every channel, repeats, ack), then closed so it can be re-run.
+        Loud: lasts until acknowledged. Quiet: a price just over the cap, sent once."""
+        r = fake_reading(price_cents=cap_cents(self.settings) + 10000 if quiet else self.settings["msrp_cents"])
+        try:
+            await self.handle_reading(r, test=True)
+            if not quiet:
+                log.info("loud test sent. It repeats every %ss until acknowledged", self.settings["repeat_seconds"])
+                await self.wait_idle()
+                log.info("acknowledged - test finished")
+        finally:
+            await self.handle_reading(replace(r, state=StockState.OUT_OF_STOCK))
 
     async def wait_idle(self) -> None:
         """Return once nothing loud is waiting for an ack (used by test mode)."""

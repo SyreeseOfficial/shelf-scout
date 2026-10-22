@@ -95,6 +95,7 @@
       "url": "https://www.reddit.com/r/consoledeals/new.rss",
       "type": "rss",
       "role": "alert",
+      "enabled": true,
       "interval_seconds": 60
     },
     {
@@ -102,6 +103,7 @@
       "url": "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1&q=ps5+pro",
       "type": "rss",
       "role": "alert",
+      "enabled": true,
       "interval_seconds": 60
     },
     {
@@ -109,6 +111,7 @@
       "url": "https://blog.playstation.com/feed/",
       "type": "rss",
       "role": "news",
+      "enabled": true,
       "interval_seconds": 900
     }
   ],

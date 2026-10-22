@@ -36,9 +36,9 @@ DEFAULTS = {
     },
     "announcement_heads_up": False,   # send a quiet message when a news feed posts a new PS5 item
     "feeds": [
-        {"name": "Reddit r/consoledeals", "url": "https://www.reddit.com/r/consoledeals/new.rss", "type": "rss", "role": "alert", "interval_seconds": 60},
-        {"name": "Slickdeals", "url": "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1&q=ps5+pro", "type": "rss", "role": "alert", "interval_seconds": 60},
-        {"name": "PlayStation Blog", "url": "https://blog.playstation.com/feed/", "type": "rss", "role": "news", "interval_seconds": 900},
+        {"name": "Reddit r/consoledeals", "url": "https://www.reddit.com/r/consoledeals/new.rss", "type": "rss", "role": "alert", "enabled": True, "interval_seconds": 60},
+        {"name": "Slickdeals", "url": "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1&q=ps5+pro", "type": "rss", "role": "alert", "enabled": True, "interval_seconds": 60},
+        {"name": "PlayStation Blog", "url": "https://blog.playstation.com/feed/", "type": "rss", "role": "news", "enabled": True, "interval_seconds": 900},
     ],
     "dashboard": {"host": "127.0.0.1", "port": 8765},
 }
@@ -129,6 +129,8 @@ def _check_feeds(items):
             _fail(f"{key}.type", f'must be "rss" (RSS or Atom; got {f["type"]!r})')
         if f.setdefault("role", "alert") not in ("alert", "news"):
             _fail(f"{key}.role", f'must be "alert" or "news" (got {f["role"]!r})')
+        if not isinstance(f.setdefault("enabled", True), bool):
+            _fail(f"{key}.enabled", "must be true or false")
         interval = f.setdefault("interval_seconds", 60)
         if not (isinstance(interval, int) and not isinstance(interval, bool) and interval >= MINIMUMS["interval_seconds"]):
             _fail(f"{key}.interval_seconds", f"must be a whole number, at least {MINIMUMS['interval_seconds']} (got {interval!r})")

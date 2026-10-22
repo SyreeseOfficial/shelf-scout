@@ -1,0 +1,76 @@
+{% if paused %}
+<div class="bar paused"><strong>⏸ STOPPED: nothing is being polled and alerts don't repeat.</strong>
+  <button class="primary" data-action="resume">Resume</button></div>
+{% elif waiting %}
+<div class="bar alert"><strong>🔔 {{ waiting }} restock alert{{ 's' if waiting != 1 }} waiting for acknowledgement (repeating).</strong>
+  <button class="danger" data-action="ack">Acknowledge</button></div>
+{% endif %}
+
+<section>
+  <h2>Live stock</h2>
+  {% if readings %}
+  <div class="wrap"><table>
+    <tr><th>Retailer</th><th>Status</th><th>Price vs MSRP</th><th>Seller</th><th>How</th><th>Source</th><th>Checked</th><th>Link</th></tr>
+    {% for r in readings %}
+    <tr>
+      <td>{{ r.retailer }}{% if r.detail and r.state != 'error' %}<br><span class="muted small">{{ r.detail }}</span>{% endif %}</td>
+      <td>{% if r.state == 'in_stock' %}<span class="b in">✔ In stock</span>{% elif r.state == 'out_of_stock' %}<span class="b out">✖ Out of stock</span>{% else %}<span class="b err">⚠ Error</span><br><span class="muted small">{{ r.detail }}</span>{% endif %}</td>
+      <td>{% if r.state == 'in_stock' %}{{ price_label(r.price_cents, msrp) }}{% endif %}</td>
+      <td>{{ r.seller or '' }}</td>
+      <td>{{ r.fulfillment or '' }}</td>
+      <td>{{ r.layer }}</td>
+      <td>{{ ago(r.at) }}</td>
+      <td>{% if r.url and r.state != 'error' %}<a href="{{ r.url }}" target="_blank" rel="noopener">open</a>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table></div>
+  {% else %}<p class="muted">Waiting for the first poll.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Test and control</h2>
+  <button data-action="test">Test alert</button>
+  <button data-action="test-quiet">Test over-cap (quiet) alert</button>
+  {% if not paused %}<button class="danger" data-action="pause">Stop everything</button>{% endif %}
+  <p class="muted small">A test goes through every enabled channel exactly like a real one, and repeats until you acknowledge it.</p>
+</section>
+
+<section>
+  <h2>Bot health</h2>
+  <div class="wrap"><table>
+    <tr><th>Source</th><th>State</th><th>Last good poll</th><th>Failures in a row</th><th>Notes</th></tr>
+    {% for h in health %}
+    <tr>
+      <td>{{ h.retailer }}</td>
+      <td>{% if h.state == 'ok' %}<span class="b in">✔ OK</span>{% elif h.state == 'blocked' %}<span class="b warn">⛔ Blocked, backing off</span>{% else %}<span class="b err">⚠ Error{% if h.error_count > 1 %}, backing off{% endif %}</span>{% endif %}</td>
+      <td>{{ ago(h.last_ok) }}</td>
+      <td>{{ h.error_count }}</td>
+      <td class="small">{{ h.note or '' }}{% if h.retailer in LOCAL_STOCK %}<span class="muted"> Local stock: yes.</span>{% elif h.retailer in ['sony','bestbuy','amazon','walmart','gamestop','costco'] %}<span class="muted"> Local stock: not available, using the online listing.</span>{% endif %}</td>
+    </tr>
+    {% else %}<tr><td colspan="5" class="muted">No polls yet.</td></tr>
+    {% endfor %}
+  </table></div>
+</section>
+
+<section>
+  <h2>Restock history</h2>
+  <div class="wrap"><table>
+    <tr><th>Retailer</th><th>Detected</th><th>In stock for</th><th>Price</th><th>Seller</th><th>Acknowledged</th></tr>
+    {% for e in history %}
+    <tr><td>{{ e.retailer }}</td><td>{{ clock(e.started) }}</td><td>{{ duration(e.started, e.ended) }}</td>
+        <td>{{ price_label(e.price_cents, msrp) }}</td><td>{{ e.seller or '' }}</td><td>{{ clock(e.acked_at) or 'no' }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No restocks seen yet.</td></tr>
+    {% endfor %}
+  </table></div>
+</section>
+
+<section>
+  <h2>Upcoming events and announcements</h2>
+  <div class="wrap"><table>
+    {% for u in upcoming %}
+    <tr><td>{{ u.when }}</td><td>{% if u.kind == 'sale' %}<span class="b warn">Sale day</span>{% else %}<span class="b out">News</span>{% endif %}</td>
+        <td>{% if u.url %}<a href="{{ u.url }}" target="_blank" rel="noopener">{{ u.title }}</a>{% else %}{{ u.title }}{% endif %}<br><span class="muted small">{{ u.note }}</span></td></tr>
+    {% else %}<tr><td class="muted">Nothing upcoming.</td></tr>
+    {% endfor %}
+  </table></div>
+</section>

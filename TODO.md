@@ -30,6 +30,13 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 - [ ] **Trackalacker not used** (no feed, JavaScript page). Not scraped; use its own email/text alerts.
 - [ ] **Sale calendar covers 2026 only.** Add 2027 dates to `shelf_scout/trackers/sale_calendar.json` before January.
 
+## Phase 6 notes
+
+- [ ] **Look at the dashboard in a real browser.** Tests cover the data and forms, and the pages return 200 with no template errors, but I haven't eyeballed the layout. Open http://127.0.0.1:8765/ and /settings and tell me what looks wrong.
+- [ ] **"Stop everything" is not remembered across restarts** (it is in memory only). Tell me if you want it saved.
+- [ ] **A secret can't be cleared from the UI** (blank means "keep"). To remove one, edit `settings.json` or turn the channel off.
+- [ ] **Renaming a feed** starts a new feed; the old one goes idle until restart.
+
 ## Untested against live sites
 
 - [ ] **Target in-stock case.** `tests/fixtures/target/in_stock.json` and `nearby.json` are hand-written from the real out-of-stock reply. Check against a real in-stock reply when one exists.

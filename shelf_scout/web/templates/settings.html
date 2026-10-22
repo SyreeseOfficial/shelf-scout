@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}shelf-scout settings{% endblock %}
+{% macro field(name, key, value, label) %}
+  {% if value is sameas true or value is sameas false %}
+    <label class="inline" style="display:block;margin:8px 0"><input type="checkbox" name="{{ name }}" {{ 'checked' if value }}> {{ label }}</label>
+  {% elif value is iterable and value is not string %}
+    <label for="{{ name }}">{{ label }} <span class="muted small">(one per line)</span></label>
+    <textarea id="{{ name }}" name="{{ name }}">{{ value | join('\n') }}</textarea>
+  {% elif key in SECRET_KEYS %}
+    <label for="{{ name }}">{{ label }} <span class="muted small">(secret; leave blank to keep the current one)</span></label>
+    <input type="text" id="{{ name }}" name="{{ name }}" value="" autocomplete="off" placeholder="{{ mask(value) or 'not set' }}">
+  {% elif value is number %}
+    <label for="{{ name }}">{{ label }}</label>
+    <input type="number" id="{{ name }}" name="{{ name }}" value="{{ value }}">
+  {% else %}
+    <label for="{{ name }}">{{ label }}</label>
+    <input type="text" id="{{ name }}" name="{{ name }}" value="{{ value }}" autocomplete="off">
+  {% endif %}
+{% endmacro %}
+{% block body %}
+<h1 style="font-size:20px;margin:0 0 12px">Settings</h1>
+{% if saved %}<div class="msg ok">Saved and applied. No restart needed (except the dashboard address, below).</div>{% endif %}
+{% if error %}<div class="msg err"><strong>Not saved.</strong> {{ error }}</div>{% endif %}
+<form method="post" action="/settings" autocomplete="off">
+
+<section>
+  <h2>Price and alerts</h2>
+  <div class="grid"><div>
+    <label for="msrp_cents">MSRP ($)</label>
+    <input type="text" id="msrp_cents" name="msrp_cents" value="{{ '%.2f' % (s.msrp_cents / 100) if s.msrp_cents is number else s.msrp_cents }}" oninput="cap()">
+    <label for="tolerance_cents">Tolerance above MSRP ($)</label>
+    <input type="text" id="tolerance_cents" name="tolerance_cents" value="{{ '%.2f' % (s.tolerance_cents / 100) if s.tolerance_cents is number else s.tolerance_cents }}" oninput="cap()">
+    <p>Loud-alert cap: <strong id="cap">${{ '%.2f' % ((s.msrp_cents + s.tolerance_cents) / 100) if s.msrp_cents is number and s.tolerance_cents is number else '?' }}</strong>
+      <span class="muted small">at or under this price = loud (repeats until acknowledged); over = one quiet message.</span></p>
+  </div><div>
+    {{ field('repeat_seconds', 'repeat_seconds', s.repeat_seconds, 'Repeat loud alerts every (seconds)') }}
+    {{ field('no_poll_alert_minutes', 'no_poll_alert_minutes', s.no_poll_alert_minutes, 'Warn me after this many minutes with no good poll') }}
+    {{ field('zip', 'zip', s.zip, 'ZIP code for local stock') }}
+    {{ field('radius_miles', 'radius_miles', s.radius_miles, 'Local stock radius (miles)') }}
+    {{ field('quiet_hours_loud_override', 'quiet_hours_loud_override', s.quiet_hours_loud_override, 'Loud alerts ignore quiet hours') }}
+    {{ field('announcement_heads_up', 'announcement_heads_up', s.announcement_heads_up, 'Send a quiet message for new PlayStation news') }}
+  </div></div>
+</section>
+
+<section>
+  <h2>Quiet hours</h2>
+  <p class="muted small">Mute = no messages in the window. Downgrade = a loud alert becomes one quiet message. Nothing is set by default. Tick the days, set the times (an end earlier than the start means overnight). To add another window, fill the empty row and save.</p>
+  {% for q in s.quiet_hours + [{'days': [], 'start': '', 'end': '', 'mode': 'mute'}] %}
+  {% set i = loop.index0 %}
+  <div style="border-top:1px solid var(--line);padding:8px 0">
+    {% for d in DAYS %}<label class="inline"><input type="checkbox" name="q{{ i }}_day{{ loop.index0 }}" {{ 'checked' if loop.index0 in q.days }}> {{ d }}</label>{% endfor %}
+    <br>
+    <label class="inline">From <input type="time" name="q{{ i }}_start" value="{{ q.start }}"></label>
+    <label class="inline">to <input type="time" name="q{{ i }}_end" value="{{ q.end }}"></label>
+    <label class="inline">Mode <select name="q{{ i }}_mode" style="width:auto"><option value="mute" {{ 'selected' if q.mode == 'mute' }}>mute</option><option value="downgrade" {{ 'selected' if q.mode == 'downgrade' }}>downgrade</option></select></label>
+    {% if not loop.last %}<label class="inline"><input type="checkbox" name="q{{ i }}_remove"> remove this window</label>{% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Retailers</h2>
+  <p class="muted small">Product links and ids live here, so a dead link is fixed without touching code. Best Buy needs a free API key (developer.bestbuy.com). Target wants the TCIN, Sony the product code, Amazon the ASIN, Walmart the item id; GameStop and Costco need full links.</p>
+  <div class="grid">
+  {% for name, r in s.retailers.items() %}
+  <div style="border-top:1px solid var(--line);padding-bottom:8px">
+    <h3>{{ name }}</h3>
+    {% for k, v in r.items() if name == 'bestbuy' or k != 'api_key' %}
+      {{ field('r_' ~ name ~ '_' ~ k, k, v, {'enabled': 'Enabled', 'interval_seconds': 'Check every (seconds)', 'urls': 'Product links', 'skus': 'Product ids (SKU / TCIN / ASIN)', 'api_key': 'API key'}[k]) }}
+    {% endfor %}
+  </div>
+  {% endfor %}
+  </div>
+</section>
+
+<section>
+  <h2>Tracker and news feeds</h2>
+  <p class="muted small">RSS/Atom feeds. "alert" feeds can trigger a loud, unverified alert; "news" feeds only fill the announcements panel. Fill the empty row to add one; tick remove (or clear the name) to delete.</p>
+  {% for f in s.feeds + [{'name': '', 'url': '', 'role': 'alert', 'enabled': True, 'interval_seconds': 60}] %}
+  {% set i = loop.index0 %}
+  <div style="border-top:1px solid var(--line);padding:8px 0">
+    <label class="inline"><input type="checkbox" name="f{{ i }}_enabled" {{ 'checked' if f.enabled }}> On</label>
+    <label for="f{{ i }}_name">Name</label><input type="text" id="f{{ i }}_name" name="f{{ i }}_name" value="{{ f.name }}">
+    <label for="f{{ i }}_url">Feed URL</label><input type="text" id="f{{ i }}_url" name="f{{ i }}_url" value="{{ f.url }}">
+    <label class="inline" style="margin-top:8px">Role <select name="f{{ i }}_role" style="width:auto"><option value="alert" {{ 'selected' if f.role == 'alert' }}>alert</option><option value="news" {{ 'selected' if f.role == 'news' }}>news</option></select></label>
+    <label class="inline">Every <input type="number" name="f{{ i }}_interval" value="{{ f.interval_seconds }}" style="width:90px"> seconds</label>
+    {% if not loop.last %}<label class="inline"><input type="checkbox" name="f{{ i }}_remove"> remove</label>{% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Notification channels</h2>
+  <div class="grid">
+  {% for name, c in s.channels.items() %}
+  <div style="border-top:1px solid var(--line);padding-bottom:8px">
+    <h3>{{ {'ntfy': 'Phone push (ntfy)', 'discord': 'Discord', 'telegram': 'Telegram', 'sms': 'Text message (email-to-SMS, best effort)', 'pc': 'This PC (sound + popup)'}[name] }}</h3>
+    {% for k, v in c.items() %}{{ field('c_' ~ name ~ '_' ~ k, k, v, k | replace('_', ' ') | capitalize) }}{% endfor %}
+  </div>
+  {% endfor %}
+  </div>
+</section>
+
+<section>
+  <h2>Dashboard address</h2>
+  <p class="muted small">Changing these needs a restart of the service. Keep the host at 127.0.0.1: there is no login, so anything else exposes your settings to your network.</p>
+  <div class="grid"><div>{% for k, v in s.dashboard.items() %}{{ field('d_' ~ k, k, v, k | capitalize) }}{% endfor %}</div></div>
+</section>
+
+<button class="primary" type="submit">Save and apply</button>
+</form>
+<script>
+function cap() {
+  const n = (id) => parseFloat(document.getElementById(id).value.replace(/[$,]/g, ''));
+  const v = n('msrp_cents') + n('tolerance_cents');
+  document.getElementById('cap').textContent = isNaN(v) ? '?' : '$' + v.toFixed(2);
+}
+</script>
+{% endblock %}

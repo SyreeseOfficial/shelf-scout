@@ -22,8 +22,9 @@ dev = ["pytest"]
 shelf-scout = "shelf_scout.__main__:main"
 
 [tool.setuptools]
-packages = ["shelf_scout", "shelf_scout.notifiers", "shelf_scout.pollers", "shelf_scout.trackers"]  # ponytail: add subpackages (web) as they appear
+packages = ["shelf_scout", "shelf_scout.notifiers", "shelf_scout.pollers", "shelf_scout.trackers", "shelf_scout.web"]
 
 [tool.setuptools.package-data]
 "shelf_scout.notifiers" = ["alarm.wav"]
 "shelf_scout.trackers" = ["sale_calendar.json"]
+"shelf_scout.web" = ["templates/*.html"]
