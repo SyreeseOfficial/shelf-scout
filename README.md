@@ -51,7 +51,7 @@ You get one phone message per block, not one per retry.
 | Sony (PlayStation Direct) | Sony's own product JSON endpoint (the one its page calls) | No (ships only) | Works live, no setup. Page layer skipped: its HTML has no stock state. |
 | Best Buy | Official Products API (free key) | No (API call is online availability only) | bestbuy.com drops our connection, so the API is the only honest route. **Needs your key** and the SKU: get a key at developer.bestbuy.com, set `retailers.bestbuy.api_key` and `retailers.bestbuy.skus`. Parser tested on hand-written fixtures only. |
 | Amazon | Product page (`/dp/<ASIN>`) | No | amazon.com serves a bot-check page to us, so it reports `blocked`. Not bypassed. Set `retailers.amazon.skus` (ASIN) anyway; it only helps if Amazon stops blocking. Parser tested on hand-written fixtures only. |
-| Target | The JSON endpoints target.com's own page calls (`redsky.target.com`) | **Yes**: nearest 5 stores within `radius_miles` of `zip` (pickup / in-store, store name shown) | Worked live when first tried (real stock + price replies saved as fixtures), then target.com's bot check (PerimeterX) started blocking us after a burst of test requests. It is not bypassed: it backs off and recovers. TCIN `93620188` is set by default. |
+| Target | The JSON endpoints target.com's own page calls (`redsky.target.com`) | **Yes**: nearest 5 stores within `radius_miles` of `zip` (pickup / in-store, store name shown) | **Works live** (checked: Lynnwood, Everett, Woodinville, Northgate stores + shipping). Its bot check (PerimeterX) blocked us for a while after a burst of test requests, then cleared; if it returns, shelf-scout backs off and recovers by itself. TCIN `93620188` is set by default. In-stock case is tested on hand-written fixtures only. |
 | Walmart | Product page, schema.org JSON-LD (`/ip/<item id>`) | No (page has no per-store data) | walmart.com redirects us to its `/blocked` page, so it reports `blocked`. Not bypassed. Default item id `11839818124` came from a web search and is unverified. Marketplace sellers are labelled from the page. |
 | GameStop | Product page, schema.org JSON-LD | No | gamestop.com answers HTTP 403 (bot check), so it reports `blocked`. Not bypassed. Put the full product link in `retailers.gamestop.urls` (I couldn't find the real PS5 Pro link). |
 | Costco | Product page, schema.org JSON-LD | No | Costco serves pages to us, but lists the console only in short-lived bundles and I found no live link. Put the full link in `retailers.costco.urls` when one appears. Parser tested on hand-written fixtures only. |
@@ -70,4 +70,32 @@ Where a retailer has no per-store data, shelf-scout uses the online listing (as 
 Defaults: Reddit r/consoledeals and Slickdeals (alert), the PlayStation Blog (news). All three work without an account. Reddit sometimes answers 403/429 when it's busy; shelf-scout backs off and retries. `type` is `rss` only. Trackalacker has no feed and builds its page with JavaScript, so keep using its own email/text alerts (the owner checklist covers this).
 The sale calendar (Black Friday, Cyber Monday, ...) is `shelf_scout/trackers/sale_calendar.json`: add next year's dates there.
 
-(Full setup, troubleshooting and the rest of the retailer table arrive in later phases.)
+## Run it as a service (restarts itself)
+
+```
+mkdir -p ~/.config/systemd/user && cp deploy/shelf-scout.service ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now shelf-scout
+loginctl enable-linger "$USER"      # keeps it running after you log out and starts it at boot
+```
+
+The unit assumes the repo is at `~/Documents/Code/shelf-scout` with its `.venv`; edit the two paths in the file if not. It restarts the process 5 seconds after any exit (checked: killing it brings it back with a new PID in seconds).
+Logs: `journalctl --user -u shelf-scout -f`, and `logs/shelf_scout.log` (rotating: 1 MB x 3 files, so about 4 MB at most). Stop it: `systemctl --user stop shelf-scout`.
+
+## What it tells you about itself
+
+- **Startup self-check** (top of the log): which channels are on, which retailers can actually poll, and warnings for anything that won't work (empty ntfy topic, missing Best Buy key, ...).
+- **"can't poll" message** when a source has had no good poll for `no_poll_alert_minutes` (default 10; slow feeds get 3x their interval), **"BLIND"** if every source is down, and one **"recovered"** message afterwards. Grouped per check, never one per retry. If your internet is down these can only reach the PC popup until it comes back.
+- A crash in one retailer's loop restarts only that loop.
+
+## Troubleshooting
+
+**1. No alerts arrive.** Run `.venv/bin/python -m shelf_scout test`. If the phone gets nothing: the log's `self-check` lines say if `alert_topic` is empty; make sure the ntfy app is subscribed to exactly that topic. If only the PC alarm works, check `channels.ntfy.server` and your internet (`curl -I https://ntfy.sh`). On Android, set the ntfy Urgent channel to override Do Not Disturb.
+
+**2. Phone Acknowledge doesn't stop the repeats.** Needs `channels.ntfy.ack_topic` set (the self-check warns if not). The ack path is the service subscribing to that topic: `journalctl --user -u shelf-scout | grep -i ack` shows if the listener is connected. The dashboard's **Acknowledge** button always works.
+
+**3. A retailer shows Error or Blocked.** Dashboard -> Bot health shows the reason. "empty in settings.json" = add its link/id/key in Settings. "blocked" = the retailer's bot check; shelf-scout backs off and does not try to get around it, so lean on the tracker feeds and the retailer's own notify-me alerts. "not a PS5 Pro" or "sku not in reply" = a wrong or dead link: fix it in Settings. Test one retailer directly: `.venv/bin/python -m shelf_scout poll-once target`.
+
+**4. The service won't start.** `systemctl --user status shelf-scout` and `journalctl --user -u shelf-scout -n 50`. A bad `settings.json` stops it with a message naming the setting; check by running `.venv/bin/python -m shelf_scout` in a terminal. If the unit says "No such file", the paths in the unit file are wrong.
+
+**5. The dashboard won't open.** It is at http://127.0.0.1:8765/ (or your `dashboard.port`). `curl -I http://127.0.0.1:8765/` and `ss -ltnp | grep 8765`. If the log says "dashboard could not start", something else uses the port: change `dashboard.port` in `settings.json` and restart. Alerts keep working without the dashboard.
+

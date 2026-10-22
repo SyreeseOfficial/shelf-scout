@@ -185,9 +185,19 @@ async def poll_step(poller: Poller, engine, conn, st: RunState) -> float:
 
 
 async def run_poller(poller: Poller, engine, conn) -> None:
-    st = RunState()
+    """Poll forever. A crash anywhere in one iteration (even outside check(), e.g. a database error) is logged and
+    retried after a growing pause; it can only ever stop this one poller, never the others or the service."""
+    st, crashes = RunState(), 0
     while True:
-        if engine.paused or not poller.enabled:  # re-checked every loop, so the dashboard's switches apply live
-            await asyncio.sleep(2)
-            continue
-        await asyncio.sleep(await poll_step(poller, engine, conn, st))
+        try:
+            if engine.paused or not poller.enabled:  # re-checked every loop, so the dashboard's switches apply live
+                await asyncio.sleep(2)
+                continue
+            wait = await poll_step(poller, engine, conn, st)
+            crashes = 0
+        except Exception:  # (CancelledError is not an Exception, so stopping the service still works)
+            crashes += 1
+            wait = min(5 * 2 ** crashes, 300)
+            log.exception("%s: poller loop crashed (crash #%d in a row); restarting it in %ss. Other sources are unaffected",
+                          poller.retailer, crashes, wait)
+        await asyncio.sleep(wait)

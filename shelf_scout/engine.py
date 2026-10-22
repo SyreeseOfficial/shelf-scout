@@ -60,6 +60,7 @@ class Engine:
         self._open: dict[tuple[str, str], _Event] = {}  # one open event per (retailer, listing url)
         self._repeat: asyncio.Task | None = None
         self._last_alert_ids: set[int] = set()  # events in the most recent alert; one Ack covers them all
+        self.resumed_at = 0.0  # when pause ended, so the watchdog doesn't count paused time as downtime
         self.paused = False  # "Stop everything": pollers idle and loud alerts stop repeating until resume()
 
     # ---- readings in -----------------------------------------------------------------------
@@ -186,7 +187,7 @@ class Engine:
         log.info("PAUSED: pollers idle and alerts stop repeating until you resume")
 
     def resume(self) -> None:
-        self.paused = False
+        self.paused, self.resumed_at = False, self._clock()
         if self._loud_pending() and (self._repeat is None or self._repeat.done()):
             self._repeat = asyncio.create_task(self._repeat_loop())  # unacked alerts pick up where they left off
         log.info("RESUMED")

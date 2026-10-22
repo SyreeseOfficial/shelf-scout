@@ -158,7 +158,7 @@ def test_block_backs_off_notifies_once_and_recovers(tmp_path):
     waits = [step(poller, engine, conn, st) for _ in range(3)]
     # 120 s, 240 s, 480 s, each within the +/-20% jitter
     assert [round(w / b) for w, b in zip(waits, (120, 240, 480))] == [1, 1, 1]
-    assert waits[1] > waits[0] * 1.4 and waits[2] > waits[1] * 1.4
+    assert waits[1] > waits[0] * 1.3 and waits[2] > waits[1] * 1.3  # worst case with +-20% jitter is 2*0.8/1.2 = 1.33
     assert len(rec.alerts) == 1 and "blocking" in rec.alerts[0].notice  # one notice for three blocked polls
     row = conn.execute("SELECT * FROM health WHERE retailer='fake'").fetchone()
     assert (row["state"], row["error_count"], row["last_ok"]) == ("blocked", 3, None)
@@ -263,3 +263,37 @@ def test_jsonld_seller_label_and_wrong_product_and_unknown_availability():
 def test_walmart_blocked_redirect_is_a_block():
     with pytest.raises(Blocked):
         raise_if_blocked(response(200, "ok", url="https://www.walmart.com/blocked?url=L2lw&uuid=x"))
+
+
+# ---- crash safety --------------------------------------------------------------------------
+
+def test_a_crash_outside_check_only_stops_that_poller_and_it_restarts(tmp_path, monkeypatch):
+    """poll_step catches errors in check(); this covers the rest (database, engine, notifier bugs)."""
+    from shelf_scout.engine import fake_reading
+    from shelf_scout.pollers import run_poller
+    good = [fake_reading("fake", state=StockState.OUT_OF_STOCK)]
+    poller, engine, conn, _ = make(tmp_path, [good] * 3)
+    calls = {"n": 0}
+    real = engine.handle_reading
+
+    async def flaky(reading, test=False):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("database is locked")
+        await real(reading, test)
+
+    engine.handle_reading = flaky
+    real_sleep = asyncio.sleep
+
+    async def run():
+        monkeypatch.setattr(asyncio, "sleep", lambda s: real_sleep(0))   # skip the waits
+        task = asyncio.create_task(run_poller(poller, engine, conn))
+        for _ in range(50):
+            await real_sleep(0.01)
+            if calls["n"] >= 3:
+                break
+        task.cancel()
+        return calls["n"], task
+
+    n, task = asyncio.run(run())
+    assert n >= 3  # first call crashed, the loop survived and kept polling

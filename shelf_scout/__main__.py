@@ -11,8 +11,9 @@ import uvicorn
 
 from . import config, db, pollers
 from .trackers.feeds import build_feed_pollers
+from .watchdog import Watchdog, startup_check
 from .web.app import create_app
-from .engine import Engine, fake_reading
+from .engine import Engine
 from .models import StockState
 from .notifiers.ntfy import ack_listener
 
@@ -56,8 +57,11 @@ async def serve_dashboard(engine: Engine, conn) -> None:
 async def run(settings: dict) -> None:
     conn = db.connect(DB_PATH)
     engine = Engine(settings, conn)
+    for level, msg in startup_check(settings):
+        getattr(log, level)("self-check: %s", msg)
     asyncio.create_task(ack_listener(engine))
     asyncio.create_task(serve_dashboard(engine, conn))
+    asyncio.create_task(Watchdog(engine).run())
     started: set[str] = set()   # retailers / feeds that already have a poller task
     async with httpx.AsyncClient(headers={"User-Agent": pollers.USER_AGENT}, timeout=15, follow_redirects=True) as client:
         while True:

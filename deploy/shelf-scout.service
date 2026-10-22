@@ -1,0 +1,19 @@
+# systemd USER unit: runs shelf-scout in the background and restarts it if it dies.
+# Install (adjust the two paths below if the repo isn't in ~/Documents/Code/shelf-scout):
+#   mkdir -p ~/.config/systemd/user && cp deploy/shelf-scout.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now shelf-scout
+#   loginctl enable-linger "$USER"      # keeps it running after you log out, and starts it at boot
+[Unit]
+Description=shelf-scout PS5 Pro stock alerts
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=%h/Documents/Code/shelf-scout
+ExecStart=%h/Documents/Code/shelf-scout/.venv/bin/python -m shelf_scout
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

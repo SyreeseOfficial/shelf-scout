@@ -15,7 +15,7 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 
 - [ ] **Walmart is blocked.** walmart.com redirects an honest client to `/blocked`. Not bypassed. Rely on the tracker layer and Walmart's own notify-me.
 - [ ] **GameStop is blocked.** HTTP 403 bot check. Not bypassed. Same fallback.
-- [ ] **Target started blocking us (PerimeterX, HTTP 435) during Phase 4 testing**, after about 10 requests in a few minutes. Worked live before that. Re-test `poll-once target` after a while. If it keeps blocking at the normal poll rate (up to 6 requests per poll with 5 stores), lower `MAX_STORES` in `pollers/target.py` or raise `retailers.target.interval_seconds`.
+- [ ] **Target blocked us once (PerimeterX, HTTP 435)** after about 10 test requests in a few minutes. It cleared by itself and now polls live (5 requests per poll). If it comes back during normal running, lower `MAX_STORES` in `pollers/target.py` or raise `retailers.target.interval_seconds`.
 
 ## Owner actions (Phase 4)
 
@@ -29,6 +29,12 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 - [ ] **Reddit rate-limits intermittently** (403/429 after bursts). The back-off handles it, but if Reddit blocks often, raise that feed's `interval_seconds`.
 - [ ] **Trackalacker not used** (no feed, JavaScript page). Not scraped; use its own email/text alerts.
 - [ ] **Sale calendar covers 2026 only.** Add 2027 dates to `shelf_scout/trackers/sale_calendar.json` before January.
+
+## Phase 7 notes
+
+- [ ] **The unit file is tested with a temporary systemd unit, not installed.** The real install (README, "Run it as a service") is yours to run. I did not enable anything on your machine.
+- [ ] **Desktop popup/alarm from the service** (`notify-send`, `paplay`) depends on the user session's environment. If the PC channel is silent under systemd but works in a terminal, run `systemctl --user import-environment WAYLAND_DISPLAY DISPLAY` and restart.
+- [ ] **The 11-minute network-cut check** is covered by unit tests with a fake clock, not by really unplugging the network.
 
 ## Phase 6 notes
 
