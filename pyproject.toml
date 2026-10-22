@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shelf-scout"
+version = "0.1.0"
+description = "Free, local PS5 Pro stock alert tool"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx",
+    "selectolax",   # the one HTML parser used everywhere
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+shelf-scout = "shelf_scout.__main__:main"
+
+[tool.setuptools]
+packages = ["shelf_scout"]  # ponytail: add subpackages (notifiers, pollers, ...) as they appear

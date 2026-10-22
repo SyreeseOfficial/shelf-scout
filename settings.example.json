@@ -1,0 +1,22 @@
+{
+  "msrp_cents": 89999,
+  "tolerance_cents": 5000,
+  "repeat_seconds": 60,
+  "no_poll_alert_minutes": 10,
+  "quiet_hours_loud_override": false,
+  "zip": "98036",
+  "radius_miles": 10,
+  "quiet_hours": [],
+  "retailers": {
+    "bestbuy": { "enabled": true, "interval_seconds": 45, "urls": [], "skus": [] }
+  },
+  "channels": {
+    "ntfy": { "enabled": true, "server": "https://ntfy.sh", "alert_topic": "", "ack_topic": "" },
+    "discord": { "enabled": false, "webhook_url": "" },
+    "telegram": { "enabled": false, "bot_token": "", "chat_id": "" },
+    "sms": { "enabled": false, "gateway_address": "", "smtp_host": "smtp.gmail.com", "smtp_user": "", "smtp_password": "" },
+    "pc": { "enabled": true }
+  },
+  "feeds": [],
+  "dashboard": { "host": "127.0.0.1", "port": 8765 }
+}
