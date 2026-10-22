@@ -178,3 +178,10 @@ def test_parse_telegram_restock_post_and_wrong_page():
     assert feeds.PS5_PRO.search(item.title) and feeds.RESTOCK.search(item.title)
     with pytest.raises(ParseError):
         feeds.parse_telegram("<html>hello</html>")
+
+
+def test_rss_item_without_title_uses_description():
+    xml = ("<rss><channel><item><link>https://bsky.app/p/1</link><description>PS5 Pro back in stock at Walmart\n\n#ad</description>"
+           "<pubDate>22 Oct 2026 22:16 +0000</pubDate></item></channel></rss>")
+    [i] = feeds.parse_feed(xml)
+    assert i.title == "PS5 Pro back in stock at Walmart #ad" and i.published is not None

@@ -64,7 +64,8 @@ def parse_feed(text: str) -> list[Item]:
         return [Item((e.findtext(ATOM + "title") or "").strip(), (e.find(ATOM + "link").get("href", "") if e.find(ATOM + "link") is not None else ""),
                      _when(e.findtext(ATOM + "published") or e.findtext(ATOM + "updated"))) for e in entries]
     if root.tag == "rss":
-        return [Item((i.findtext("title") or "").strip(), (i.findtext("link") or "").strip(), _when(i.findtext("pubDate")))
+        # Bluesky RSS items have no <title>, only the post text in <description>.
+        return [Item(" ".join((i.findtext("title") or i.findtext("description") or "").split()), (i.findtext("link") or "").strip(), _when(i.findtext("pubDate")))
                 for i in root.iter("item")]
     raise ParseError(f"the feed's top-level tag is <{root.tag}>, not RSS or Atom. Check the URL in settings.json")
 
