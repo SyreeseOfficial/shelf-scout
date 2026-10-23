@@ -22,7 +22,7 @@ class Ntfy:
         if not topic:
             raise RuntimeError('channels.ntfy.alert_topic is empty in settings.json - set it to your ntfy topic name')
         url = alert.rows[0].url
-        actions = [f"view, Open listing, {url}"]
+        actions = [f"view, Open listing, {url}"] if url else []  # empty url (doctor ping) made an illegal trailing-space header
         if alert.loud and ack_topic:
             # The button POSTs "ack:<id>" to the ack topic; ack_listener() below hears it.
             actions.append(f"http, Acknowledge, {server}/{ack_topic}, method=POST, body=ack:{alert.event_id}, clear=true")
@@ -30,9 +30,11 @@ class Ntfy:
             "Title": title(alert),
             "Priority": "urgent" if alert.loud else "low",  # urgent can bypass Do Not Disturb on Android
             "Tags": "rotating_light" if alert.loud else "shopping_cart",
-            "Click": url,
-            "Actions": "; ".join(actions),
         }
+        if url:
+            headers["Click"] = url
+        if actions:
+            headers["Actions"] = "; ".join(actions)
         async with httpx.AsyncClient(timeout=15) as c:
             r = await c.post(f"{server}/{topic}", content=body(alert).encode(), headers=headers)
             r.raise_for_status()
