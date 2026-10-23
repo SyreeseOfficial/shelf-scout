@@ -69,3 +69,15 @@ Found while building Phase 3 (2026-10-22). Owner actions first, then code follow
 
 - [ ] **Phase 3 "10 minute run" check.** I ran the full service for about 3 minutes. Do a 10 minute run and look at the health panel.
 - [ ] **Sony page layer skipped.** The page HTML has no stock state (JavaScript fills it in and "Add to Cart" is always present), so only the endpoint layer exists.
+
+## Sources checked 2026-10-22 (more retailers / feeds)
+
+- [x] **Feeds added in `settings.json` (local, gitignored):** DealNews Video Games (alert, 120 s) and Push Square on Bluesky (news, 300 s). Restart the service to load them.
+- [ ] **Sam's Club: no poller.** Search shows no PS5 Pro listing and product pages are JavaScript-rendered, so a poller can't be checked. If you see a Sam's PS5 Pro link, send it and a JSON-LD poller (like Costco) can be tried.
+- [ ] **Newegg and B&H are blocked (HTTP 403).** Not bypassed. NowInStock may cover them.
+- [ ] **Woot: no feed or search page found.** Skipped.
+- [ ] **Micro Center skipped:** no store near the owner.
+- [ ] **More Bluesky restock accounts:** guessed handles (stockinformer, ps5stockalerts, ps5restocks) don't exist. Add a real one in Settings -> Feeds as `https://bsky.app/profile/<handle>/rss`.
+- [ ] **r/PS5Deals not added:** Reddit answered 429, and a second Reddit feed makes the rate limit worse.
+- [ ] **The `shelf-scout` service was inactive** when last checked: `systemctl --user enable --now shelf-scout`, then restart after any feed change.
+- [x] **ntfy ping failed with "illegal header" on a link-less alert** (`doctor` ping). Fixed: Click/Actions headers are skipped when there is no link.
